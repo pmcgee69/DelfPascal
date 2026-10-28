@@ -14,7 +14,7 @@ A Delf file is Delphi with a few additions:
 A transpiler, **delfc**, turns it into readable, standard Delphi (currently compiling on dcc32, dcc64), that a Delphi programmer could have written
 by hand and can step through in the debugger.
 
-Inspired by functional several ideas ...  implicit loops, immutable encourged. 
+Inspired by several functional ideas: implicit loops, immutability encouraged.
 A stricter, more functional, **Paskell**, is a separate idea for later.
 
 This repository is the public summary: the approach, what works today, what's planned, and the evidence. 
@@ -91,10 +91,10 @@ compiles on dcc32 and dcc64 as predicted. On the large corpus, a Delphi file ren
 
 ## The slides
 
-Two decks, as PDFs in [`docs/`](docs/) (to come):
+Two decks, as PDFs in [`docs/`](docs/):
 
-- *Finding the start*: one search, written every way Delf allows, and what delfc writes.
-- *The big ideas*: the present as a proof of concept, then the future.
+- [*Finding the start*](docs/Finding-the-start.pdf): one search, written every way Delf allows, and what delfc writes.
+- [*The big ideas*](docs/Delf-big-ideas.pdf): the present as a proof of concept, then the future.
 
 ## More
 
