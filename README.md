@@ -1,21 +1,28 @@
 # Delf
 
-**Delphi with the type system it should have had, translated to plain Delphi.**
+**Delphi with a modern functional-influenced type system, transpiling to plain Delphi.**
 
 Delf is an aspirational Delphi preprocessor design project. 
-A Delf file is Delphi with a few additions:
-- sum types (`Optional`, rust Results) and
-- pattern matching (`match`)  in place of nil and sentinel values, 
-- tuples,
+A Delf file is Delphi with additions of syntax and code-correctness:
+- sum types (`Optional`, Rust Results) and
+- pattern matching (`match`) - in place of nil and sentinel values, 
+- raw tuples,
 - lambdas with inferred types,  `λch -> ord(ch)`
-- arrow function notation and   `function test: (char->byte)`
-- no implicit conversions.
+- arrow function notation and   `function test: (char -> byte)`
+- no implicit conversions,
+- mandatory exhaustive cases,
+- checking for exhaustive, empty, or invalid compiler directives.
 
 A transpiler, **delfc**, turns it into readable, standard Delphi (currently compiling on dcc32, dcc64), that a Delphi programmer could have written
 by hand and can step through in the debugger.
 
-Inspired by several functional ideas: implicit loops, immutability encouraged.
-A stricter, more functional, **Paskell**, is a separate idea for later.
+Inspired by several ideas: 
+- "Correct by construction"
+- "Make illegal states impossible to represent"
+- "Parse don't validate"
+- functional influences: expression-based, implicit loops, immutability encouraged, 1st class functions, strong generic type inference.
+  
+A stricter, **more** functional, **Paskell**, is a separate idea for later.
 
 This repository is the public summary: the approach, what works today, what's planned, and the evidence. 
 The design work itself, the specification, the notes and delfc's source, lives in a private repository for now.
@@ -23,21 +30,26 @@ The design work itself, the specification, the notes and delfc's source, lives i
 ## The approach
 
 - **Stage 1 changes declarations; Stage 2 changes control flow.**
+
   A Stage 1 rewrite has the same shape as the original: the same loops, statements and order.
   What changes is what things are *declared as*, and so what the compiler can check. 
   Stage 2 (lazy sequences, pipelines, fusion, generators) comes later.
 - **Predict first, then compile.** 
+
   Every claim about what dcc32 does is a prediction until it
   has been compiled, and the prediction is written down *before* the experiment runs, so a
   wrong one stays recorded as wrong. 49 experiments so far: [EXPERIMENTS.md](EXPERIMENTS.md).
 - **The Door.** 
+
   Rename any Delphi file to `.delf` and nothing changes: the same output, no
   new errors .. but some increased checks as warnings or hints. 
   delfc is checked against real code, over 17,000 files from the
   Delphi RTL and VCL and 116 open-source repositories: [CORPUS.md](CORPUS.md).
 - **Better safety without red tape.** 
+
   A safety rule that makes the writer repeat themselves is a sign the syntax is missing something.
 - **Ideally no cost at run time.** 
+
   delfc's output should be as fast as good hand-written Delphi: [PERFORMANCE.md](PERFORMANCE.md).
 
 ## What works today
