@@ -11,7 +11,7 @@ A Delf file is Delphi with additions of syntax and code-correctness:
 - arrow function notation and   `function test: (char -> byte)`
 - no implicit conversions,
 - mandatory exhaustive cases,
-- checking for exhaustive, empty, or invalid compiler directives.
+- checking for exhaustive, empty, or invalid conditional-compilation directives.
 
 A transpiler, **delfc**, turns it into readable, standard Delphi (currently compiling on dcc32, dcc64), that a Delphi programmer could have written
 by hand and can step through in the debugger.
