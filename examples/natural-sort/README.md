@@ -6,8 +6,8 @@ function Explorer sorts with.
 
 | File | What | Lines |
 |---|---|---:|
-| [`1-chunks.delf`](1-chunks.delf) | **Delf**: a name is a list of chunks, a sum type `Digits(…) \| Text(…)`, compared with `match` | 131 |
-| [`1-chunks.dpr`](1-chunks.dpr) | the Delphi that delfc, Delf's transpiler, wrote from it, unedited: plain Delphi, using Delf's small runtime unit `Delf.Prelude` (for `Take`) | 213 |
+| [`1-chunks.delf`](1-chunks.delf) | **Delf**: a name is a list of chunks, a sum type `Digits(…) \| Text(…)`, compared with `match` | 121 |
+| [`1-chunks.dpr`](1-chunks.dpr) | the Delphi that delfc, Delf's transpiler, wrote from it, unedited: plain Delphi, using Delf's small runtime unit `Delf.Prelude` (for `Take`) | 203 |
 | [`delphi/NaturalSort.dpr`](delphi/NaturalSort.dpr) | **plain Delphi**, written as a Delphi programmer would: one pass over both names with an index into each | 110 |
 | [`cpp/natural_sort23.cpp`](cpp/natural_sort23.cpp) | **C++23**: `std::variant` for the chunks, `std::visit` over two of them, `std::views::zip` | 110 |
 
@@ -49,8 +49,8 @@ bcc64x -O2 -std=c++23 cpp\natural_sort23.cpp -lshlwapi -o natural_sort23.exe
   Text(Value: string)`, and the comparison is a `match`, checked for every case. The plain
   Delphi version keeps the same knowledge in index arithmetic.
 - **Delf wants a `match` on a pair.** The C++ version compares two chunks with one
-  `std::visit` over both, four cases in one place. Delf today needs a `match` inside a
-  function per first chunk (`DigitsAgainst`, `TextAgainst`). With a `match` on a pair:
+  `std::visit` over both, four cases in one place. Delf today nests a `match` on the second
+  chunk inside each arm of a `match` on the first. With a `match` on a pair:
 
   ```pascal
   Exit( match (A, B) of
@@ -62,8 +62,10 @@ bcc64x -O2 -std=c++23 cpp\natural_sort23.cpp -lshlwapi -o natural_sort23.exe
   ```
 
   That's planned, not built.
-- **A nested `match` as an arm's value** isn't translated by delfc yet (it wrote invalid
-  Delphi, without a word; to be fixed).
+- **A delfc bug, found and fixed.** A `match` as another `match` arm's value came out as
+  invalid Delphi, with no message. The first version of this program worked around it with a
+  function per inner `match`. Fixed the same day: the inner `match` becomes a `case` inside
+  the outer arm, as one would write it by hand.
 - **A span, built for this.** `NaturalCompare`'s loop works out its bound first, then
   enumerates that many chunks of one name: `for const (I, P) in X.Take(N).Enumerate do`.
   `Take` is a span, a view of part of the array, with no copy: the array, a start and a count.

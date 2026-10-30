@@ -10,9 +10,10 @@ program NaturalSort;
 
    Beside it: delphi\, the same program in plain Delphi, and cpp\, in C++23.
 
-   Wanted, not yet in delfc: a match on a pair, which would fold DigitsAgainst
-   and TextAgainst into CompareChunks (rung 2, several scrutinees); a nested
-   match as an arm's value; Zip in the library for NaturalCompare's loop.
+   Wanted, not yet in delfc: a match on a pair, which would make CompareChunks
+   one match of four arms (rung 2, several scrutinees); Zip in the library for
+   NaturalCompare's loop. CompareChunks' nested match needed delfc's fix of
+   31 Oct (silent decision 3.21); before it, a function per inner match.
 
    Prediction, dcc64 37.0: each name beside Explorer's order, the same in every
    row but possibly a-b and a1b, where StrCmpLogicalW may ignore the hyphen.
@@ -105,48 +106,37 @@ begin
   Exit( CompareValue(B.Length, A.Length) );
 end;
 
-// a run of digits against a chunk: digits by value, and before any text
-function DigitsAgainst(const X: string; const B: TChunk): Integer;
-begin
-  case B.Kind of
-    TChunkKind.Digits :
-      begin
-        const Y = B.DigitsValue;
-        Exit( CompareDigits(X, Y) );
-      end;
-    TChunkKind.Text   : Exit( -1 );
-  else
-    __dpp_Unreachable('TChunkKind', Ord(B.Kind));
-  end;
-end;
-
-// text against a chunk: text ignoring case, and after any digits
-function TextAgainst(const S: string; const B: TChunk): Integer;
-begin
-  case B.Kind of
-    TChunkKind.Digits : Exit( 1 );
-    TChunkKind.Text   :
-      begin
-        const T = B.TextValue;
-        Exit( CompareText(S, T) );
-      end;
-  else
-    __dpp_Unreachable('TChunkKind', Ord(B.Kind));
-  end;
-end;
-
+// digits against digits by value, text against text ignoring case, digits before text
 function CompareChunks(const A, B: TChunk): Integer;
 begin
   case A.Kind of
     TChunkKind.Digits :
       begin
         const X = A.DigitsValue;
-        Exit( DigitsAgainst(X, B) );
+        case B.Kind of
+          TChunkKind.Digits :
+            begin
+              const Y = B.DigitsValue;
+              Exit( CompareDigits(X, Y) );
+            end;
+          TChunkKind.Text   : Exit( -1 );
+        else
+          __dpp_Unreachable('TChunkKind', Ord(B.Kind));
+        end
       end;
     TChunkKind.Text   :
       begin
         const S = A.TextValue;
-        Exit( TextAgainst(S, B) );
+        case B.Kind of
+          TChunkKind.Digits : Exit( 1 );
+          TChunkKind.Text   :
+            begin
+              const T = B.TextValue;
+              Exit( CompareText(S, T) );
+            end;
+        else
+          __dpp_Unreachable('TChunkKind', Ord(B.Kind));
+        end
       end;
   else
     __dpp_Unreachable('TChunkKind', Ord(A.Kind));
