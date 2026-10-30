@@ -113,6 +113,9 @@ Two decks, as PDFs in [`docs/`](docs/):
 - [EXPERIMENTS.md](EXPERIMENTS.md): the 49 experiments and what each settled.
 - [CORPUS.md](CORPUS.md): the code delfc is tested on, and how.
 - [PERFORMANCE.md](PERFORMANCE.md): delfc's output against hand-written Delphi and C++.
+- [examples/natural-sort](examples/natural-sort/): a natural sort (`file2` before `file10`)
+  in Delf, as delfc translates it, in plain Delphi and in C++23, all four checked against
+  Explorer's order.
 - [TreeSitter4D](https://github.com/pmcgee69/TreeSitter4D): tree-sitter built with C++Builder
   and used from Delphi and C++Builder programs, with the same program in Delf beside them, and
   delfc's output.

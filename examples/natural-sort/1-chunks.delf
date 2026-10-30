@@ -1,0 +1,130 @@
+program NaturalSort;
+
+(* A natural sort: file2 before file10 (user, 31 Oct: "Let's see natural
+   sort"; the user's forcing example since handover 1). A name is a run of
+   chunks, digits or text; two names compare chunk by chunk, and the first
+   chunk that differs decides. Digits compare by value (kept as text, so any
+   length), with more leading zeros first for the same value; text compares
+   ignoring case; a run of digits comes before text. Checked against Windows'
+   StrCmpLogicalW, which Explorer sorts with.
+
+   Beside it: delphi\, the same program in plain Delphi, and cpp\, in C++23.
+
+   Wanted, not yet in delfc: a match on a pair, which would fold DigitsAgainst
+   and TextAgainst into CompareChunks (rung 2, several scrutinees); a nested
+   match as an arm's value; Zip in the library for NaturalCompare's loop.
+
+   Prediction, dcc64 37.0: each name beside Explorer's order, the same in every
+   row but possibly a-b and a1b, where StrCmpLogicalW may ignore the hyphen.
+   🧪 31 Oct (Claude, dcc64 37.0): all 21 rows the same as Explorer's, a-b and
+   a1b too (the hedge was unneeded); the Delphi and C++23 versions print the
+   same 21 lines. *)
+
+{$APPTYPE CONSOLE}
+
+uses
+  System.SysUtils, System.Character, System.Math, System.Generics.Defaults,
+  System.Generics.Collections, Winapi.ShLwApi;
+
+type
+  TChunk =
+    | Digits(Value: string)     // kept as text: any length, no overflow
+    | Text(Value: string);
+
+// the digits without their leading zeros: '007' is '7', '000' is '0'
+function Bare(const D: string): string;
+begin
+  const T = D.TrimLeft(['0']);
+  Exit( if T = '' then '0' else T );
+end;
+
+// two runs of digits by value: the shorter is smaller, then digit by digit;
+// for the same value, more leading zeros first, as Explorer has it (file02, file2)
+function CompareDigits(const A, B: string): Integer;
+begin
+  const X = Bare(A);
+  const Y = Bare(B);
+  if X.Length <> Y.Length then Exit( CompareValue(X.Length, Y.Length) );
+  if X <> Y then Exit( CompareStr(X, Y) );
+  Exit( CompareValue(B.Length, A.Length) );
+end;
+
+// a run of digits against a chunk: digits by value, and before any text
+function DigitsAgainst(const X: string; const B: TChunk): Integer;
+begin
+  Exit( match B of
+          | Digits(Y) : CompareDigits(X, Y)
+          | Text(_)   : -1
+        end );
+end;
+
+// text against a chunk: text ignoring case, and after any digits
+function TextAgainst(const S: string; const B: TChunk): Integer;
+begin
+  Exit( match B of
+          | Digits(_) : 1
+          | Text(T)   : CompareText(S, T)
+        end );
+end;
+
+function CompareChunks(const A, B: TChunk): Integer;
+begin
+  Exit( match A of
+          | Digits(X) : DigitsAgainst(X, B)
+          | Text(S)   : TextAgainst(S, B)
+        end );
+end;
+
+// a name cut into its chunks: 'file10.txt' is Text('file'), Digits('10'), Text('.txt')
+function Chunks(const S: string): TArray<TChunk>;
+begin
+  Result := [];
+  var i := 1;
+  while i <= S.Length do
+  begin
+    const IsDigits = S[i].IsDigit;
+    var j := i;
+    while (j <= S.Length) and (S[j].IsDigit = IsDigits) do Inc(j);
+    const Run = Copy(S, i, j - i);
+    const Chunk: TChunk := if IsDigits then Digits(Run) else Text(Run);
+    Result := Result + [Chunk];
+    i := j;
+  end;
+end;
+
+// the first chunk that differs decides; else the one with fewer chunks comes first
+function NaturalCompare(const A, B: string): Integer;
+begin
+  const X = Chunks(A);
+  const Y = Chunks(B);
+  for var i := 0 to Min(X.Length, Y.Length) - 1 do
+  begin
+    const C = CompareChunks(X[i], Y[i]);
+    if C <> 0 then Exit( C );
+  end;
+  Exit( CompareValue(X.Length, Y.Length) );
+end;
+
+function Sorted(const Names: TArray<string>; const Compare: TComparison<string>): TArray<string>;
+begin
+  Result := Copy(Names);
+  TArray.Sort<string>(Result, TComparer<string>.Construct(Compare));
+end;
+
+function Explorer(const A, B: string): Integer;
+begin
+  Exit( StrCmpLogicalW(PChar(A), PChar(B)) );
+end;
+
+const
+  Names: TArray<string> = ['file10.txt', 'file2.txt', 'File1.txt', 'file1.txt', 'file02.txt',
+                           'a100', 'a20', 'a3b', 'a3a', 'x9z', 'x10y', 'version 1.10',
+                           'version 1.9', 'item99999999999999999999', 'item100',
+                           'ab1', 'abc', 'a-b', 'a1b', 'x001', 'x01'];
+
+begin
+  const Ours = Sorted(Names, NaturalCompare);
+  const Theirs = Sorted(Names, Explorer);
+  for var i := 0 to High(Ours) do
+    Writeln(Ours[i].PadRight(28), Theirs[i].PadRight(28), if Ours[i] = Theirs[i] then '' else '<- differs');
+end.
