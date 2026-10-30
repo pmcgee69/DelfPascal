@@ -97,9 +97,10 @@ function NaturalCompare(const A, B: string): Integer;
 begin
   const X = Chunks(A);
   const Y = Chunks(B);
-  for var i := 0 to Min(X.Length, Y.Length) - 1 do
+  const N = Min(X.Length, Y.Length);
+  for const (I, P) in X.Take(N).Enumerate do
   begin
-    const C = CompareChunks(X[i], Y[i]);
+    const C = CompareChunks(P, Y[I]);
     if C <> 0 then Exit( C );
   end;
   Exit( CompareValue(X.Length, Y.Length) );

@@ -22,7 +22,7 @@ program NaturalSort;
 
 {$APPTYPE CONSOLE}
 
-uses
+uses Delf.Prelude,
   System.SysUtils, System.Character, System.Math, System.Generics.Defaults,
   System.Generics.Collections, Winapi.ShLwApi;
 
@@ -175,10 +175,15 @@ function NaturalCompare(const A, B: string): Integer;
 begin
   const X = Chunks(A);
   const Y = Chunks(B);
-  for var i := 0 to Min(Length(X), Length(Y)) - 1 do
+  const N = Min(Length(X), Length(Y));
   begin
-    const C = CompareChunks(X[i], Y[i]);
-    if C <> 0 then Exit( C );
+    const __dpp_1 = TFunctions.Take<TChunk>(X, N);
+    for var I := 0 to __dpp_1.Count - 1 do
+    begin
+      const P = __dpp_1[I];
+      const C = CompareChunks(P, Y[I]);
+      if C <> 0 then Exit( C )
+    end;
   end;
   Exit( CompareValue(Length(X), Length(Y)) );
 end;

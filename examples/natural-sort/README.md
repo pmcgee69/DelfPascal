@@ -6,8 +6,8 @@ function Explorer sorts with.
 
 | File | What | Lines |
 |---|---|---:|
-| [`1-chunks.delf`](1-chunks.delf) | **Delf**: a name is a list of chunks, a sum type `Digits(…) \| Text(…)`, compared with `match` | 130 |
-| [`1-chunks.dpr`](1-chunks.dpr) | the Delphi that delfc, Delf's transpiler, wrote from it, unedited; plain Delphi needing no other unit | 205 |
+| [`1-chunks.delf`](1-chunks.delf) | **Delf**: a name is a list of chunks, a sum type `Digits(…) \| Text(…)`, compared with `match` | 131 |
+| [`1-chunks.dpr`](1-chunks.dpr) | the Delphi that delfc, Delf's transpiler, wrote from it, unedited: plain Delphi, using Delf's small runtime unit `Delf.Prelude` (for `Take`) | 213 |
 | [`delphi/NaturalSort.dpr`](delphi/NaturalSort.dpr) | **plain Delphi**, written as a Delphi programmer would: one pass over both names with an index into each | 110 |
 | [`cpp/natural_sort23.cpp`](cpp/natural_sort23.cpp) | **C++23**: `std::variant` for the chunks, `std::visit` over two of them, `std::views::zip` | 110 |
 
@@ -35,10 +35,13 @@ x001          x01           x9z           x10y
 ## Building
 
 ```
-dcc64 1-chunks.dpr                                  (the Delf version, as delfc wrote it)
+dcc64 -U<runtime> 1-chunks.dpr                      (the Delf version, as delfc wrote it)
 dcc64 delphi\NaturalSort.dpr
 bcc64x -O2 -std=c++23 cpp\natural_sort23.cpp -lshlwapi -o natural_sort23.exe
 ```
+
+`<runtime>` is the folder with Delf's runtime units (`Delf.Prelude.pas`, `Delf.Optional.pas`,
+`Delf.Tuples.pas`), plain Delphi too.
 
 ## What writing it in Delf showed
 
@@ -61,4 +64,10 @@ bcc64x -O2 -std=c++23 cpp\natural_sort23.cpp -lshlwapi -o natural_sort23.exe
   That's planned, not built.
 - **A nested `match` as an arm's value** isn't translated by delfc yet (it wrote invalid
   Delphi, without a word; to be fixed).
-- **`Zip`** would let `NaturalCompare`'s loop read as C++'s `std::views::zip` does.
+- **A span, built for this.** `NaturalCompare`'s loop works out its bound first, then
+  enumerates that many chunks of one name: `for const (I, P) in X.Take(N).Enumerate do`.
+  `Take` is a span, a view of part of the array, with no copy: the array, a start and a count.
+  It was added to Delf's library because of this loop; the first version, `Copy(X, 0, N)`,
+  copied the chunks on every comparison.
+- **`Zip`** would let the loop read as C++'s `std::views::zip` does, walking both names'
+  chunks together.
