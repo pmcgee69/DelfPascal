@@ -1,9 +1,10 @@
 # A natural sort, in Delf, Delphi and C++
 
 `file2` before `file10`: names sorted as people expect, with runs of digits compared by
-value. The same program in three Delf phases, plain Delphi and C++23, checked against
-Windows' own `StrCmpLogicalW`, the function Explorer sorts with. Phase 3 matches it exactly
-on 4,000 real file names.
+value. The same program in four Delf phases, plain Delphi and C++23, checked against
+Windows' own `StrCmpLogicalW`, the function Explorer sorts with. Phases 3 and 4 match it
+exactly on 6,000 real file names; phase 4 by stating Explorer's rule, with no call to
+Windows in its comparison.
 
 | File | What | Lines |
 |---|---|---:|
@@ -13,6 +14,8 @@ on 4,000 real file names.
 | [`2-pipeline.dpr`](2-pipeline.dpr) | delfc's Delphi for phase 2 | 199 |
 | [`3-windows.delf`](3-windows.delf) | **Delf, phase 3: Explorer's order exactly.** Each name becomes a sort key compared by Windows' own text comparison | 135 |
 | [`3-windows.dpr`](3-windows.dpr) | delfc's Delphi for phase 3 | 201 |
+| [`4-kinds.delf`](4-kinds.delf) | **Delf, phase 4: Explorer's rule, stated.** Tokens of three kinds, `TKind = (Symbol, Digit, Letter)` in Explorer's order, compared by `Ord` | 179 |
+| [`4-kinds.dpr`](4-kinds.dpr) | delfc's Delphi for phase 4 | 266 |
 | [`delphi/NaturalSort.dpr`](delphi/NaturalSort.dpr) | **plain Delphi**, written as a Delphi programmer would: one pass over both names with an index into each | 110 |
 | [`cpp/natural_sort23.cpp`](cpp/natural_sort23.cpp) | **C++23**: `std::variant` for the chunks, `std::visit` over two of them, `std::views::zip` | 110 |
 
@@ -90,12 +93,57 @@ before `02…`, and `file02` before `file2` because `98` comes before `99` there
 of 2,000 different names (seed 2, 28 names in common), where phases 1 and 2 had 102. A run
 of more than 99 significant digits, or 99 leading zeros, would break the key.
 
+### Phase 4: Explorer's rule, stated
+
+The user (31 Oct): *"Comparing via Windows misses the point of the code. There are 3 enum
+values .. or 2 nested enums. Can we use the ord of the enums to our advantage?"* Phase 3 was
+right, but by handing the decision to Windows; the program no longer said what the rule is.
+Phase 4 says it. A name is a list of **tokens**, a run of digits or one other character, and
+every token is one of three kinds, declared in Explorer's order:
+
+```pascal
+TKind = (Symbol, Digit, Letter);    // Explorer's order: Ord compares them
+
+function CompareTokens(const A, B: TToken): Integer;
+begin
+  const K = CompareValue(Ord(KindOf(A)), Ord(KindOf(B)));
+  if K <> 0 then Exit( K );
+  Exit( match (A, B) of
+          | (Number(X), Number(Y)) : CompareDigits(X, Y)
+          | (Single(C), Single(D)) : CompareValue(Rank(C), Rank(D))
+          | _                      : 0      // different kinds: decided above
+        end );
+end;
+```
+
+`Ord` alone puts `_` before letters and `.` before digits, the 69 disagreements of the first
+table that weren't about hyphens. Letters compare ignoring case; two symbols by Explorer's
+order among them; a hyphen and an apostrophe make no token, since Explorer ignores them. A
+name's tokens are a pipeline, `S.Runs(IsDigit).AndThen(ToTokens)`, the list monad's bind.
+
+The one piece of data, Explorer's order among the symbols and the two it ignores, was
+measured once with a probe of `StrCmpLogicalW` on each printable ASCII symbol and is written
+into the program as constants:
+
+```pascal
+Symbols = ' !"#$%&()*,./:;?@[\]^_`{|}~+<=>';   // not ASCII order: +<=> come after ~
+Ignored = '-''';
+```
+
+"Two nested enums" (`Digits | Text`, with `Symbol | Letter` inside `Text`) names the same
+kinds, but Explorer's order interleaves them, symbol, digit, letter, so one enum of three is
+what `Ord` can compare.
+
+**Result: 0 of 1,999 neighbours the other way round on all three samples**, the third (seed
+3) not used while building phases 3 and 4; phase 1 had 121 there. And the 21 names above.
+
 ## Building
 
 ```
 dcc64 -U<runtime> 1-chunks.dpr                      (the Delf version, as delfc wrote it)
 dcc64 -U<runtime> 2-pipeline.dpr                    (phase 2)
 dcc64 -U<runtime> 3-windows.dpr                     (phase 3)
+dcc64 -U<runtime> 4-kinds.dpr                       (phase 4)
 dcc64 delphi\NaturalSort.dpr
 bcc64x -O2 -std=c++23 cpp\natural_sort23.cpp -lshlwapi -o natural_sort23.exe
 ```

@@ -1,0 +1,179 @@
+program NaturalSort;
+
+(* Phase 4: Explorer's order, by its rule (31 Oct; user: "Comparing via
+   Windows misses the point of the code. There are 3 enum values .. or 2
+   nested enums. Can we use the ord of the enums to our advantage?").
+
+   Phase 3 matched Explorer by handing a key to Windows' own comparison, so
+   the program no longer said what the rule is. Here it does. A name is a
+   list of tokens: a run of digits, or one other character. Every token is of
+   a kind, a symbol, a digit run or a letter, and TKind declares the three in
+   Explorer's order, so Ord compares them: that alone puts `_` before letters
+   and `.` before digits. Two digit runs compare by value, then leading zeros
+   (more first); two letters ignoring case; two symbols by Explorer's order
+   among them. Explorer ignores a hyphen and an apostrophe, so they make no
+   token.
+
+   The one piece of data, the order among the symbols and the two ignored, was
+   measured once from Windows (31 Oct, a probe: StrCmpLogicalW on each
+   printable ASCII symbol) and is written here as constants. "Two nested
+   enums" (Digits | Text, with Symbol | Letter inside Text) would say the same
+   kinds, but Explorer's order interleaves them (a symbol, a digit, a letter),
+   so one enum of three is what Ord can compare.
+
+   Beside it: phases 1 to 3, delphi\ and cpp\. *)
+
+{$APPTYPE CONSOLE}
+
+uses
+  System.SysUtils, System.Character, System.Math, System.Generics.Defaults,
+  System.Generics.Collections, System.IOUtils, Winapi.ShLwApi;
+
+type
+  // the kinds of token, declared in Explorer's order: Ord compares them
+  TKind = (Symbol, Digit, Letter);
+
+  TToken =
+    | Number(Digits: string)    // a run of digits, kept as text: any length
+    | Single(C: Char);          // any other character
+
+const
+  // Explorer's order among the symbols (measured once from Windows): a
+  // symbol's place in this string is its rank
+  Symbols = ' !"#$%&()*,./:;?@[\]^_`{|}~+<=>';
+  // the two Explorer ignores
+  Ignored = '-''';
+
+// the digits without their leading zeros: '007' is '7', '000' is '0'
+function Bare(const D: string): string;
+begin
+  const T = D.TrimLeft(['0']);
+  Exit( if T = '' then '0' else T );
+end;
+
+// two runs of digits by value: the shorter is smaller, then digit by digit;
+// for the same value, more leading zeros first (file02 before file2)
+function CompareDigits(const A, B: string): Integer;
+begin
+  const X = Bare(A);
+  const Y = Bare(B);
+  if X.Length <> Y.Length then Exit( CompareValue(X.Length, Y.Length) );
+  if X <> Y then Exit( CompareStr(X, Y) );
+  Exit( CompareValue(B.Length, A.Length) );
+end;
+
+function KindOf(const T: TToken): TKind;
+begin
+  Exit( match T of
+          | Number(_) : Digit
+          | Single(C) : if C.IsLetter then Letter else Symbol
+        end );
+end;
+
+// a letter by its upper case; a symbol by its place in Explorer's order (one
+// not listed after all of them, by its code)
+function Rank(const C: Char): Integer;
+begin
+  if C.IsLetter then Exit( Ord(C.ToUpper) );
+  const At = Symbols.IndexOf(C);
+  Exit( if At >= 0 then At else Symbols.Length + Ord(C) );
+end;
+
+// tokens of different kinds by their kinds' order; two numbers by value; two
+// characters by rank
+function CompareTokens(const A, B: TToken): Integer;
+begin
+  const K = CompareValue(Ord(KindOf(A)), Ord(KindOf(B)));
+  if K <> 0 then Exit( K );
+  Exit( match (A, B) of
+          | (Number(X), Number(Y)) : CompareDigits(X, Y)
+          | (Single(C), Single(D)) : CompareValue(Rank(C), Rank(D))
+          | _                      : 0      // different kinds: decided above
+        end );
+end;
+
+// Char's IsDigit as a function to pass (the RTL's is a helper's method)
+function IsDigit(const C: Char): Boolean;
+begin
+  Exit( C.IsDigit );
+end;
+
+// a run of digits is one token; any other run is a token per character, but
+// for those Explorer ignores
+function ToTokens(const Run: string): TArray<TToken>;
+begin
+  Result := [];
+  if Run[1].IsDigit then
+  begin
+    const T: TToken := Number(Run);
+    Result := [T];
+    Exit;
+  end;
+  for const C in Run do
+    if not Ignored.Contains(C) then
+    begin
+      const T: TToken := Single(C);
+      Result := Result + [T];
+    end;
+end;
+
+// a name's tokens: 'file10.txt' is f, i, l, e, 10, ., t, x, t
+function Tokens(const S: string): TArray<TToken>;
+begin
+  Exit( S.Runs(IsDigit).AndThen(ToTokens) );
+end;
+
+// the first token comparison that isn't 0 decides; else the one with fewer tokens comes first
+function NaturalCompare(const A, B: string): Integer;
+begin
+  const X = Tokens(A);
+  const Y = Tokens(B);
+  Exit( X.ZipWith(Y, CompareTokens).Find(λC -> C <> 0).OrDefault(CompareValue(X.Length, Y.Length)) );
+end;
+
+// sorted by Compare, and names it calls equal (README.md, Readme.md) by their
+// characters, so each order is one order: TArray.Sort isn't stable
+function Sorted(const Names: TArray<string>; const Compare: TComparison<string>): TArray<string>;
+begin
+  Result := Copy(Names);
+  TArray.Sort<string>(Result, TComparer<string>.Construct(
+    function(const A, B: string): Integer
+    begin
+      Result := Compare(A, B);
+      if Result = 0 then Result := CompareStr(A, B);
+    end));
+end;
+
+function Explorer(const A, B: string): Integer;
+begin
+  Exit( StrCmpLogicalW(PChar(A), PChar(B)) );
+end;
+
+const
+  Names: TArray<string> = ['file10.txt', 'file2.txt', 'File1.txt', 'file1.txt', 'file02.txt',
+                           'a100', 'a20', 'a3b', 'a3a', 'x9z', 'x10y', 'version 1.10',
+                           'version 1.9', 'item99999999999999999999', 'item100',
+                           'ab1', 'abc', 'a-b', 'a1b', 'x001', 'x01'];
+
+// the names above, beside Explorer's order; or, given a file of names, one per
+// line, the neighbours in our order that Explorer puts the other way round
+begin
+  if ParamCount = 0 then
+  begin
+    const Ours = Sorted(Names, NaturalCompare);
+    const Theirs = Sorted(Names, Explorer);
+    for var i := 0 to High(Ours) do
+      Writeln(Ours[i].PadRight(28), Theirs[i].PadRight(28), if Ours[i] = Theirs[i] then '' else '<- differs');
+    Exit;
+  end;
+  const Ours = Sorted(TFile.ReadAllLines(ParamStr(1), TEncoding.UTF8), NaturalCompare);
+  var Disagree := 0;
+  for var i := 0 to High(Ours) - 1 do
+    if Explorer(Ours[i], Ours[i + 1]) > 0 then
+    begin
+      Inc(Disagree);
+      Writeln(Ours[i].PadRight(44), ' before  ', Ours[i + 1]);
+    end;
+  Writeln(Length(Ours), ' names: Explorer puts ', Disagree, ' of ', High(Ours),
+          ' neighbours the other way round');
+end.
