@@ -1,0 +1,135 @@
+program NaturalSort;
+
+(* Phase 3: Explorer's order (31 Oct; user: "The point of nat sort is to
+   mirror windows .. so we should do that, as another version again").
+
+   On 2,000 real file names, phases 1 and 2 put 105 of 1,999 neighbours the
+   other way round from Explorer (StrCmpLogicalW), all about punctuation:
+   Windows compares text by its locale's word sort, which ignores hyphens and
+   puts symbols before digits before letters, and it compares across the
+   boundary between a run of letters and a run of digits (exp_x before exp2,
+   since `_` comes before `2`), which a comparison chunk by chunk can't see.
+
+   So each name becomes a sort key, compared by Windows' own text comparison
+   (AnsiCompareText is its CompareString, ignoring case): text as it is, and
+   each run of digits as its count of significant digits (two digits), the
+   digits without their leading zeros, then 99 less the zeros (two digits).
+   2 is '01299' and 10 is '021099', so the comparison orders numbers by value;
+   for the same value, more leading zeros first, right there (file02 before
+   file2, and 067c before 67a); everything else follows Windows' rules. A run
+   of more than 99 significant digits, or 99 leading zeros, would break it.
+
+   🧪 31 Oct (Claude, dcc64 37.0): the 21 names in Explorer's order; on two
+   samples of 2,000 real file names (seeds 1 and 2), 0 of 1,999 neighbours
+   the other way round, where phases 1 and 2 had 105 and 102.
+
+   Beside it: 1-chunks.delf (chunk by chunk, a match on a pair), 2-pipeline.delf
+   (the same as pipelines), delphi\ and cpp\. *)
+
+{$APPTYPE CONSOLE}
+
+uses
+  System.SysUtils, System.Character, System.Math, System.Generics.Defaults,
+  System.Generics.Collections, System.IOUtils, Winapi.ShLwApi;
+
+type
+  TChunk =
+    | Digits(Value: string)     // kept as text: any length, no overflow
+    | Text(Value: string);
+
+// the digits without their leading zeros: '007' is '7', '000' is '0'
+function Bare(const D: string): string;
+begin
+  const T = D.TrimLeft(['0']);
+  Exit( if T = '' then '0' else T );
+end;
+
+// a chunk in the sort key: text as it is; digits as their count of significant
+// digits (two digits), the digits, then 99 less their leading zeros (two
+// digits), so more zeros come first right there, before the rest of the name,
+// as Explorer has it (067c before 67a): 2 is '01299', 02 is '01298', 10 is '021099'
+function KeyPart(const C: TChunk): string;
+begin
+  Exit( match C of
+          | Digits(V) : Format('%.2d%s%.2d', [Bare(V).Length, Bare(V), 99 - (V.Length - Bare(V).Length)])
+          | Text(V)   : V
+        end );
+end;
+
+// a name cut into its chunks: 'file10.txt' is Text('file'), Digits('10'), Text('.txt')
+function Chunks(const S: string): TArray<TChunk>;
+begin
+  Result := [];
+  var i := 1;
+  while i <= S.Length do
+  begin
+    const IsDigits = S[i].IsDigit;
+    var j := i;
+    while (j <= S.Length) and (S[j].IsDigit = IsDigits) do Inc(j);
+    const Run = Copy(S, i, j - i);
+    const Chunk: TChunk := if IsDigits then Digits(Run) else Text(Run);
+    Result := Result + [Chunk];
+    i := j;
+  end;
+end;
+
+// a name's sort key: 'file10.txt' is 'file021099.txt'
+function Key(const S: string): string;
+begin
+  Exit( Chunks(S).Map(KeyPart).Join('') );
+end;
+
+// as Explorer: the keys by Windows' own text comparison, ignoring case; for
+// the same key, the longer name first
+function NaturalCompare(const A, B: string): Integer;
+begin
+  const C = AnsiCompareText(Key(A), Key(B));
+  Exit( if C <> 0 then C else CompareValue(B.Length, A.Length) );
+end;
+
+// sorted by Compare, and names it calls equal (README.md, Readme.md) by their
+// characters, so each order is one order: TArray.Sort isn't stable
+function Sorted(const Names: TArray<string>; const Compare: TComparison<string>): TArray<string>;
+begin
+  Result := Copy(Names);
+  TArray.Sort<string>(Result, TComparer<string>.Construct(
+    function(const A, B: string): Integer
+    begin
+      Result := Compare(A, B);
+      if Result = 0 then Result := CompareStr(A, B);
+    end));
+end;
+
+function Explorer(const A, B: string): Integer;
+begin
+  Exit( StrCmpLogicalW(PChar(A), PChar(B)) );
+end;
+
+const
+  Names: TArray<string> = ['file10.txt', 'file2.txt', 'File1.txt', 'file1.txt', 'file02.txt',
+                           'a100', 'a20', 'a3b', 'a3a', 'x9z', 'x10y', 'version 1.10',
+                           'version 1.9', 'item99999999999999999999', 'item100',
+                           'ab1', 'abc', 'a-b', 'a1b', 'x001', 'x01'];
+
+// the names above, beside Explorer's order; or, given a file of names, one per
+// line, the neighbours in our order that Explorer puts the other way round
+begin
+  if ParamCount = 0 then
+  begin
+    const Ours = Sorted(Names, NaturalCompare);
+    const Theirs = Sorted(Names, Explorer);
+    for var i := 0 to High(Ours) do
+      Writeln(Ours[i].PadRight(28), Theirs[i].PadRight(28), if Ours[i] = Theirs[i] then '' else '<- differs');
+    Exit;
+  end;
+  const Ours = Sorted(TFile.ReadAllLines(ParamStr(1), TEncoding.UTF8), NaturalCompare);
+  var Disagree := 0;
+  for var i := 0 to High(Ours) - 1 do
+    if Explorer(Ours[i], Ours[i + 1]) > 0 then
+    begin
+      Inc(Disagree);
+      Writeln(Ours[i].PadRight(44), ' before  ', Ours[i + 1]);
+    end;
+  Writeln(Length(Ours), ' names: Explorer puts ', Disagree, ' of ', High(Ours),
+          ' neighbours the other way round');
+end.

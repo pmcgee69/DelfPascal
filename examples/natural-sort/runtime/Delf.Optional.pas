@@ -56,6 +56,8 @@ type
   // each operation taking a function comes twice, TFunc and TConstFunc, and
   // Delphi picks by the routine passed (30 Oct, user: overloads, not wrappers)
   TConstFunc<T, TResult> = reference to function(const Arg: T): TResult;
+  // the same for two arguments, beside TFunc<T1, T2, TResult> (ZipWith, 31 Oct)
+  TConstFunc<T1, T2, TResult> = reference to function(const Arg1: T1; const Arg2: T2): TResult;
 
   TOptional = record
     class function Map<T, U>(const O: Optional<T>; const F: TFunc<T, U>): Optional<U>; overload; static;

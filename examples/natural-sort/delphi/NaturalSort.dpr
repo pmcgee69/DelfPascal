@@ -10,7 +10,7 @@ program NaturalSort;
 
 uses
   System.SysUtils, System.Character, System.Math, System.Generics.Defaults,
-  System.Generics.Collections, Winapi.ShLwApi;
+  System.Generics.Collections, System.IOUtils, Winapi.ShLwApi;
 
 // the end of the run of digits that starts at I, and where it starts without its leading zeros
 procedure DigitRun(const S: string; I: Integer; out Start, Stop: Integer);
@@ -75,10 +75,18 @@ begin
   Result := CompareValue(Length(A) - I, Length(B) - J);
 end;
 
+// sorted by Compare, and names it calls equal (README.md, Readme.md) by their
+// characters, so each order is one order: TArray.Sort isn't stable
 function Sorted(const Names: TArray<string>; const Compare: TComparison<string>): TArray<string>;
 begin
   Result := Copy(Names);
-  TArray.Sort<string>(Result, TComparer<string>.Construct(Compare));
+  TArray.Sort<string>(Result, TComparer<string>.Construct(
+    function(const A, B: string): Integer
+    begin
+      Result := Compare(A, B);
+      if Result = 0 then
+        Result := CompareStr(A, B);
+    end));
 end;
 
 function Explorer(const A, B: string): Integer;
@@ -92,19 +100,35 @@ const
                            'version 1.9', 'item99999999999999999999', 'item100',
                            'ab1', 'abc', 'a-b', 'a1b', 'x001', 'x01'];
 
+// the names above, beside Explorer's order; or, given a file of names, one per
+// line, the neighbours in our order that Explorer puts the other way round
 var
   Ours, Theirs: TArray<string>;
-  I: Integer;
+  I, Disagree: Integer;
   Mark: string;
 begin
-  Ours := Sorted(Names, NaturalCompare);
-  Theirs := Sorted(Names, Explorer);
-  for I := 0 to High(Ours) do
+  if ParamCount = 0 then
   begin
-    if Ours[I] = Theirs[I] then
-      Mark := ''
-    else
-      Mark := '<- differs';
-    Writeln(Ours[I].PadRight(28), Theirs[I].PadRight(28), Mark);
+    Ours := Sorted(Names, NaturalCompare);
+    Theirs := Sorted(Names, Explorer);
+    for I := 0 to High(Ours) do
+    begin
+      if Ours[I] = Theirs[I] then
+        Mark := ''
+      else
+        Mark := '<- differs';
+      Writeln(Ours[I].PadRight(28), Theirs[I].PadRight(28), Mark);
+    end;
+    Exit;
   end;
+  Ours := Sorted(TFile.ReadAllLines(ParamStr(1), TEncoding.UTF8), NaturalCompare);
+  Disagree := 0;
+  for I := 0 to High(Ours) - 1 do
+    if Explorer(Ours[I], Ours[I + 1]) > 0 then
+    begin
+      Inc(Disagree);
+      Writeln(Ours[I].PadRight(44), ' before  ', Ours[I + 1]);
+    end;
+  Writeln(Length(Ours), ' names: Explorer puts ', Disagree, ' of ', High(Ours),
+          ' neighbours the other way round');
 end.

@@ -10,10 +10,11 @@ program NaturalSort;
 
    Beside it: delphi\, the same program in plain Delphi, and cpp\, in C++23.
 
-   Wanted, not yet in delfc: a match on a pair, which would make CompareChunks
-   one match of four arms (rung 2, several scrutinees); Zip in the library for
-   NaturalCompare's loop. CompareChunks' nested match needed delfc's fix of
-   31 Oct (silent decision 3.21); before it, a function per inner match.
+   CompareChunks is a match on a pair (user, 31 Oct), built in delfc for it
+   the same day; before it, a match nested in each arm (after delfc's fix,
+   silent decision 3.21), and before that a function per inner match.
+   Phase 2, 2-pipeline.delf, writes Chunks and NaturalCompare as pipelines,
+   with Runs and ZipWith (user, 31 Oct: both versions kept).
 
    Prediction, dcc64 37.0: each name beside Explorer's order, the same in every
    row but possibly a-b and a1b, where StrCmpLogicalW may ignore the hyphen.
@@ -25,7 +26,7 @@ program NaturalSort;
 
 uses Delf.Prelude,
   System.SysUtils, System.Character, System.Math, System.Generics.Defaults,
-  System.Generics.Collections, Winapi.ShLwApi;
+  System.Generics.Collections, System.IOUtils, Winapi.ShLwApi;
 
 { The else of an exhaustive match (SPEC §9.3): unreachable from Delf code, which checks every
   value is covered. noreturn tells dcc32 so, and removes W1035 (experiment 20). }
@@ -111,32 +112,28 @@ function CompareChunks(const A, B: TChunk): Integer;
 begin
   case A.Kind of
     TChunkKind.Digits :
-      begin
-        const X = A.DigitsValue;
-        case B.Kind of
-          TChunkKind.Digits :
-            begin
-              const Y = B.DigitsValue;
-              Exit( CompareDigits(X, Y) );
-            end;
-          TChunkKind.Text   : Exit( -1 );
-        else
-          __dpp_Unreachable('TChunkKind', Ord(B.Kind));
-        end
+      case B.Kind of
+        TChunkKind.Digits :
+          begin
+            const X = A.DigitsValue;
+            const Y = B.DigitsValue;
+            Exit( CompareDigits(X, Y) );
+          end;
+        TChunkKind.Text   : Exit( -1 );
+      else
+        __dpp_Unreachable('TChunkKind', Ord(B.Kind));
       end;
     TChunkKind.Text   :
-      begin
-        const S = A.TextValue;
-        case B.Kind of
-          TChunkKind.Digits : Exit( 1 );
-          TChunkKind.Text   :
-            begin
-              const T = B.TextValue;
-              Exit( CompareText(S, T) );
-            end;
-        else
-          __dpp_Unreachable('TChunkKind', Ord(B.Kind));
-        end
+      case B.Kind of
+        TChunkKind.Digits : Exit( 1 );
+        TChunkKind.Text   :
+          begin
+            const S = A.TextValue;
+            const T = B.TextValue;
+            Exit( CompareText(S, T) );
+          end;
+      else
+        __dpp_Unreachable('TChunkKind', Ord(B.Kind));
       end;
   else
     __dpp_Unreachable('TChunkKind', Ord(A.Kind));
@@ -178,10 +175,17 @@ begin
   Exit( CompareValue(Length(X), Length(Y)) );
 end;
 
+// sorted by Compare, and names it calls equal (README.md, Readme.md) by their
+// characters, so each order is one order: TArray.Sort isn't stable
 function Sorted(const Names: TArray<string>; const Compare: TComparison<string>): TArray<string>;
 begin
   Result := Copy(Names);
-  TArray.Sort<string>(Result, TComparer<string>.Construct(Compare));
+  TArray.Sort<string>(Result, TComparer<string>.Construct(
+    function(const A, B: string): Integer
+    begin
+      Result := Compare(A, B);
+      if Result = 0 then Result := CompareStr(A, B);
+    end));
 end;
 
 function Explorer(const A, B: string): Integer;
@@ -195,9 +199,25 @@ const
                            'version 1.9', 'item99999999999999999999', 'item100',
                            'ab1', 'abc', 'a-b', 'a1b', 'x001', 'x01'];
 
+// the names above, beside Explorer's order; or, given a file of names, one per
+// line, the neighbours in our order that Explorer puts the other way round
 begin
-  const Ours = Sorted(Names, NaturalCompare);
-  const Theirs = Sorted(Names, Explorer);
-  for var i := 0 to High(Ours) do
-    Writeln(Ours[i].PadRight(28), Theirs[i].PadRight(28), if Ours[i] = Theirs[i] then '' else '<- differs');
+  if ParamCount = 0 then
+  begin
+    const Ours = Sorted(Names, NaturalCompare);
+    const Theirs = Sorted(Names, Explorer);
+    for var i := 0 to High(Ours) do
+      Writeln(Ours[i].PadRight(28), Theirs[i].PadRight(28), if Ours[i] = Theirs[i] then '' else '<- differs');
+    Exit;
+  end;
+  const Ours = Sorted(TFile.ReadAllLines(ParamStr(1), TEncoding.UTF8), NaturalCompare);
+  var Disagree := 0;
+  for var i := 0 to High(Ours) - 1 do
+    if Explorer(Ours[i], Ours[i + 1]) > 0 then
+    begin
+      Inc(Disagree);
+      Writeln(Ours[i].PadRight(44), ' before  ', Ours[i + 1]);
+    end;
+  Writeln(Length(Ours), ' names: Explorer puts ', Disagree, ' of ', High(Ours),
+          ' neighbours the other way round');
 end.

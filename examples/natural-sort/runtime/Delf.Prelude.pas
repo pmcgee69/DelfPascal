@@ -122,6 +122,11 @@ type
     class function Sum(const Xs: TArray<Int64>): Int64; overload; static;
     class function Sum(const Xs: TArray<Double>): Double; overload; static;
 
+    class function ZipWith<T, U, R>(const Xs: TArray<T>; const Ys: TArray<U>; const F: TFunc<T, U, R>): TArray<R>; overload; static;
+    class function ZipWith<T, U, R>(const Xs: TArray<T>; const Ys: TArray<U>; const F: TConstFunc<T, U, R>): TArray<R>; overload; static;
+    class function Runs(const S: string; const P: TFunc<Char, Boolean>): TArray<string>; overload; static;
+    class function Runs(const S: string; const P: TConstFunc<Char, Boolean>): TArray<string>; overload; static;
+
     class function Take<T>(const Xs: TArray<T>; N: Integer): TSpan<T>; static;
     class function Drop<T>(const Xs: TArray<T>; N: Integer): TSpan<T>; static;
     class function Span<T>(const Xs: TArray<T>; Start, Count: Integer): TSpan<T>; static;
@@ -338,6 +343,49 @@ function TSpan<T>.TEnumerator.MoveNext: Boolean;
 begin
   Inc(FIndex);
   Exit( FIndex < FStop );
+end;
+
+// F of each pair, Xs[i] with Ys[i], as far as the shorter goes (Haskell's zipWith)
+class function TFunctions.ZipWith<T, U, R>(const Xs: TArray<T>; const Ys: TArray<U>; const F: TFunc<T, U, R>): TArray<R>;
+begin
+  SetLength(Result, System.Math.Min(Length(Xs), Length(Ys)));
+  for var i := 0 to High(Result) do Result[i] := F(Xs[i], Ys[i]);
+end;
+
+class function TFunctions.ZipWith<T, U, R>(const Xs: TArray<T>; const Ys: TArray<U>; const F: TConstFunc<T, U, R>): TArray<R>;
+begin
+  SetLength(Result, System.Math.Min(Length(Xs), Length(Ys)));
+  for var i := 0 to High(Result) do Result[i] := F(Xs[i], Ys[i]);
+end;
+
+// S cut where P changes, into its longest runs: Runs('ab12c', IsDigit) is 'ab', '12', 'c'
+// (Haskell's groupBy on P)
+class function TFunctions.Runs(const S: string; const P: TFunc<Char, Boolean>): TArray<string>;
+begin
+  Result := [];
+  var i := 1;
+  while i <= Length(S) do
+  begin
+    const Kind = P(S[i]);
+    var j := i + 1;
+    while (j <= Length(S)) and (P(S[j]) = Kind) do Inc(j);
+    Result := Result + [Copy(S, i, j - i)];
+    i := j;
+  end;
+end;
+
+class function TFunctions.Runs(const S: string; const P: TConstFunc<Char, Boolean>): TArray<string>;
+begin
+  Result := [];
+  var i := 1;
+  while i <= Length(S) do
+  begin
+    const Kind = P(S[i]);
+    var j := i + 1;
+    while (j <= Length(S)) and (P(S[j]) = Kind) do Inc(j);
+    Result := Result + [Copy(S, i, j - i)];
+    i := j;
+  end;
 end;
 
 // the first N, or all of them if there are fewer
