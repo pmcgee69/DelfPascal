@@ -1,0 +1,137 @@
+{$APPTYPE CONSOLE}
+program GuardPatrolOptional;
+
+{ examples/06-guard-patrol a third time, with Optional and nested patterns
+  (23 Oct): SPEC §4.4's own form. 2-match.delf (19 Oct) still
+  answered "off the grid" with ' ', a character that only happens not to occur
+  in the input (examples/README.md, endnote 3). Here Lookup answers Absent, and
+  the grid's characters become TCell once, in Cell, at the edge. Advance is
+
+    match Lookup(Grid, Next) of
+      | Absent        : Exited
+      | Present(Wall) : Turned(Turn(D))
+      | Present(Open) : Moved(Next)
+    end
+
+  with no wildcard: add a cell kind and it stops compiling until Advance
+  decides what the new kind does.
+
+  Input: the puzzle's published sample (AoC 2024 day 6, part 1).
+
+  Predicted output (Claude, 23 Oct, before compiling): the same as before,
+    start: 4 6
+    turns: 10
+    visited: 41
+  and the same diagnostics: none on Win32, one W1072 on Win64 in Start
+  (finding 6, poc/examples/README.md). }
+
+uses
+  System.SysUtils;
+
+type
+  TDir  = (Up, Right, Down, Left);
+  TCell = (Open, Wall);
+
+  TStep =
+    | Moved (Pos: (Integer, Integer))
+    | Turned(Facing: TDir)
+    | Exited;
+
+function Step(D: TDir): (Integer, Integer);
+begin
+  Exit( match D of
+          | Up    : ( 0, -1)
+          | Right : ( 1,  0)
+          | Down  : ( 0,  1)
+          | Left  : (-1,  0)
+        end
+      );
+end;
+
+function Turn(D: TDir): TDir;
+begin
+  Exit( match D of
+          | Up    : Right
+          | Right : Down
+          | Down  : Left
+          | Left  : Up
+        end
+      );
+end;
+
+// the input's characters, read once: '^' marks the start, on an open cell
+function Cell(C: Char): TCell;
+begin
+  Exit( match C of
+          | '#' : Wall
+          | _   : Open
+        end
+      );
+end;
+
+function Lookup(const Grid: TArray<string>; const P: (Integer, Integer)): Optional<TCell>;
+begin
+  const (X, Y) := P;
+  if (Y < 0) or (Y >= Length(Grid))    or
+     (X < 0) or (X >= Length(Grid[Y])) then Exit( Absent );
+  Exit( Present(Cell(Grid[Y].Chars[X])) );
+end;
+
+function Start(const Grid: TArray<string>): (Integer, Integer);
+begin
+  for var Y := 0 to High(Grid) do
+    if Grid[Y].Contains('^') then Exit( (Grid[Y].IndexOf('^'), Y) );
+  Exit( (-1, -1) );
+end;
+
+function Advance(const Grid: TArray<string>; const P: (Integer, Integer); D: TDir): TStep;
+begin
+  const (DX, DY) := Step(D);
+  const Next: (Integer, Integer) := (P[0] + DX, P[1] + DY);
+  Exit( match Lookup(Grid, Next) of
+          | Absent        : Exited
+          | Present(Wall) : Turned(Turn(D))
+          | Present(Open) : Moved(Next)
+        end
+      );
+end;
+
+begin
+  const Grid: TArray<string> := [
+    '....#.....',
+    '.........#',
+    '..........',
+    '..#.......',
+    '.......#..',
+    '..........',
+    '.#..^.....',
+    '........#.',
+    '#.........',
+    '......#...'];
+
+  var P       := Start(Grid);
+  var D       := Up;
+  var Turns   := 0;
+  var Visited := 1;
+  var Seen    : TArray<TArray<Boolean>>;
+  SetLength(Seen, Length(Grid), Length(Grid[0]));
+  Seen[P[1]][P[0]] := True;
+  WriteLn('start: ', P[0], ' ', P[1]);
+
+  while True do
+  begin
+    match Advance(Grid, P, D) of
+      | Moved(Q)  : begin
+                      const (QX, QY) := Q;
+                      if not Seen[QY][QX] then Inc(Visited);
+                      Seen[QY][QX] := True;
+                      P := Q;
+                    end
+      | Turned(E) : begin Inc(Turns); D := E end
+      | Exited    : Break
+    end;
+  end;
+
+  WriteLn('turns: ', Turns);
+  WriteLn('visited: ', Visited);
+end.

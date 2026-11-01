@@ -1,0 +1,87 @@
+unit Demo.Grids;
+
+{ A grid of values read by a point, for the examples (user, 23 Oct: "TGrid
+  needs its own unit", in Delf). Demo code, not a library decision.
+
+  Total: every position has a value. Off the grid it is the border, given
+  when the grid is made (SPEC §4.5a: "the lookup should be total ... pad the
+  grid with a dead border"), so Grid[P] never raises. Writing off the grid
+  does: the border is not a place. The [y][x] order stays in here. }
+
+interface
+
+uses
+  System.SysUtils, System.Types;
+
+type
+  TGrid<T> = record
+  strict private
+    FCells  : TArray<TArray<T>>;          // [y][x]
+    FBorder : T;                          // the value everywhere off the grid
+    function  Get(const P: TPoint): T;
+    procedure Put(const P: TPoint; const Value: T);
+  public
+    // Width by Height, every cell the border's value
+    constructor Create(Width, Height: Integer; const Border: T); overload;
+    // one row per line, one cell per character
+    constructor Create(const Lines: TArray<string>; const Convert: (Char -> T);
+                       const Border: T); overload;
+    function Width: Integer;
+    function Height: Integer;
+    function Contains(const P: TPoint): Boolean;
+    property Items[const P: TPoint]: T read Get write Put; default;
+  end;
+
+implementation
+
+constructor TGrid<T>.Create(Width, Height: Integer; const Border: T);
+begin
+  FBorder := Border;
+  SetLength(FCells, Height, Width);
+  for var y := 0 to Height - 1 do
+    for var x := 0 to Width - 1 do FCells[y][x] := Border;
+end;
+
+constructor TGrid<T>.Create(const Lines: TArray<string>; const Convert: (Char -> T);
+                            const Border: T);
+begin
+  FBorder := Border;
+  SetLength(FCells, Length(Lines));
+  for var y := 0 to High(Lines) do
+  begin
+    SetLength(FCells[y], Lines[y].Length);
+    for var x := 0 to Lines[y].Length - 1 do FCells[y][x] := Convert(Lines[y].Chars[x]);
+  end;
+end;
+
+function TGrid<T>.Width: Integer;
+begin
+  if Length(FCells) = 0 then Exit( 0 );
+  Exit( Length(FCells[0]) );
+end;
+
+function TGrid<T>.Height: Integer;
+begin
+  Exit( Length(FCells) );
+end;
+
+function TGrid<T>.Contains(const P: TPoint): Boolean;
+begin
+  Exit( (P.y >= 0) and (P.y < Length(FCells))       and
+        (P.x >= 0) and (P.x < Length(FCells[P.y])) );
+end;
+
+function TGrid<T>.Get(const P: TPoint): T;
+begin
+  if not Contains(P) then Exit( FBorder );
+  Exit( FCells[P.y][P.x] );
+end;
+
+procedure TGrid<T>.Put(const P: TPoint; const Value: T);
+begin
+  if not Contains(P) then
+    raise ERangeError.CreateFmt('(%d, %d) is off the grid', [P.x, P.y]);
+  FCells[P.y][P.x] := Value;
+end;
+
+end.

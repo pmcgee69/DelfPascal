@@ -1,16 +1,17 @@
-
-
-
-```
 {$APPTYPE CONSOLE}
 program Hangman;
 
-{ A small Delf demo for a forum post
- -  match on strings
- -  for … in with Enumeration. 
- The guesses are pre-decided, so every run prints the same.
+{ A small Delf demo for a forum post, after 06's guard patrol (user,
+  23 Oct): match on strings, and for … in with the index, Enumerate. The
+  guesses are a constant, so every run prints the same.
 
-  Output :
+  The user's edits: TMatches; TInitArray<T>.Create(Length, Fill), from the
+  prelude (Delphi's own TArray<T>.Create takes the elements); and
+  Found.ToString, a free function by UFCS. 27 Oct (the user): ToString and its
+  helper Symbol made one, the conditional expression inline and the
+  character taken from Enumerate.
+
+  Predicted output (Claude, 23 Oct, before compiling):
     e     _ E _ _ _ _
     hint  a language, and an oracle
     x     no, 4 chances left
@@ -32,7 +33,7 @@ const
   Lives   = 5;
 
 type
-  TMatches = TInitArray<Boolean>;
+  TMatches = TArray<Boolean>;
 
 
 function ToString(const Found: TMatches): string;
@@ -46,20 +47,18 @@ end;
 function Reveal(Letter: Char; var Found: TMatches): Boolean;
 begin
   Result := False;
-  for var (i, ch) in Word.Enumerate do
-    if ch = Letter then begin Found[i] := True; Result := True; end;
+  for var (i, Ch) in Word.Enumerate do
+    if Ch = Letter then begin Found[i] := True; Result := True; end;
 end;
-
 
 function Solved(const Found: TMatches): Boolean;
 begin
-  for const b in Found do if not b then Exit( False );
+  for const F in Found do if not F then Exit( False );
   Exit( True );
 end;
 
-
 begin
-  var Found := TMatches.create( Length(Word), False );
+  var Found := TInitArray<Boolean>.Create( Length(Word), False );
   var Left  := Lives;
 
   for const Guess in Guesses do
@@ -77,5 +76,4 @@ begin
     if Solved(Found) then begin writeln('solved, with ', Left, ' chances left'); Break; end;
     if Left = 0      then begin writeln('hanged'); Break; end;
   end;
-end.    
-```
+end.

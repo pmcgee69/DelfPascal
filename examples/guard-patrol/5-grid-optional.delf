@@ -1,0 +1,151 @@
+{$APPTYPE CONSOLE}
+program GuardPatrolGridOptional;
+
+{ 4-grid.delf with Optional (user, 23 Oct), kept line for line where it can
+  be, so the two compare directly.
+
+  - The grid is Demo.OptionalGrids (user: its own unit): partial, where
+    4-grid's is total. TryGet answers Absent off the grid.
+  - So TCell is back to two states, Open and Wall. Off the grid isn't a
+    cell any more, it's Absent, and nothing can store it in the grid.
+  - Start returns Optional<TPoint>, where 4-grid's TryStart had a Boolean
+    and an out parameter (the slide on the out pattern). The arm that has
+    the point declares GuardPos (user, 23 Oct): a TPoint from here on, not
+    an Optional, and the other arm leaves. delfc declares it before the
+    case and assigns it in the arm.
+  - The input is a TGrid<Char> (user, 23 Oct), made from the lines with Id,
+    the prelude's identity. The other two grids are maps of it, side by
+    side (user): Grid through CharToCell, Seen through a lambda that
+    answers False.
+  - Start goes through the input's Rows; each row knows its Index, and Find
+    answers an Optional<Integer>, which Start matches. The Absent arm is
+    empty, a comment saying skip (user): the loop goes on. SPEC §4.5a calls an empty arm
+    on an Optional a smell; its narrowing form, is Present(x), isn't in
+    delfc yet.
+  - Step answers a TPointDelta, a move rather than a place, written as a
+    record literal with its field names, (dx: 0; dy: -1) (user, 23 Oct:
+    not positional, (0, -1), where field order would become meaning), and
+    TPoint + TPointDelta is a TPoint; ToString shows a point. Both are in
+    the prelude (user: the RTL's TPoint.Offset is a procedure, "evil").
+
+  Input: the puzzle's published sample (AoC 2024 day 6, part 1).
+
+  Predicted output (Claude, 23 Oct, before compiling): as before, with the
+  start shown by ToString,
+    start: (4, 6)
+    turns: 10
+    visited: 41
+  No warnings on Win32. On Win64 with -W+IMPLICIT_CONVERSION_LOSS, six
+  W1072 (finding 6), all in Demo.OptionalGrids, where a 64-bit index from
+  High meets an Integer: Width and Height; Map, twice (x and y into Point);
+  Rows (y into Index); Find (x into Present). }
+
+uses
+  System.SysUtils, System.Types, Demo.OptionalGrids;
+
+const
+  Lines: TArray<string> = [
+    '....#.....',
+    '.........#',
+    '..........',
+    '..#.......',
+    '.......#..',
+    '..........',
+    '.#..^.....',
+    '........#.',
+    '#.........',
+    '......#...'];
+
+type
+  TDir  = (Up, Right, Down, Left);
+  TCell = (Open, Wall);
+
+  TStep =
+    | Moved (Pos: TPoint)
+    | Turned(Facing: TDir)
+    | Exited;
+
+function Step(Dir: TDir): TPointDelta;
+begin
+  Exit( match Dir of
+          | Up    : (dx:  0; dy: -1)
+          | Right : (dx:  1; dy:  0)
+          | Down  : (dx:  0; dy:  1)
+          | Left  : (dx: -1; dy:  0)
+        end
+      );
+end;
+
+function Turn(Dir: TDir): TDir;
+begin
+  Exit( match Dir of
+          | Up    : Right
+          | Right : Down
+          | Down  : Left
+          | Left  : Up
+        end
+      );
+end;
+
+function Start(const Input: TGrid<Char>): Optional<TPoint>;
+begin
+  for var Row in Input.Rows do
+    match Row.Find('^') of
+      | Present(x) : Exit( Present(Point(x, Row.Index)) )
+      | Absent     : {skip}
+    end;
+  Exit( Absent );
+end;
+
+function Advance(const Grid: TGrid<TCell>; const GuardPos: TPoint; Facing: TDir): TStep;
+begin
+  const Next := GuardPos + Step(Facing);
+  Exit( match Grid.TryGet(Next) of
+          | Present(Wall) : Turned(Turn(Facing))
+          | Present(Open) : Moved(Next)
+          | Absent        : Exited
+        end
+      );
+end;
+
+// In Delphi,
+//   const CharToCell: TFunc<Char, TCell> =
+//     function(Ch: Char): TCell begin Result := if Ch = '#' then Wall else Open; end;
+//
+// and λch -> False
+//   function(ch: Char): Boolean begin Result := False; end
+begin
+  const Input := TGrid<Char>.Create(Lines, Id);
+
+  const CharToCell := λ(Ch: Char) -> if Ch = '#' then Wall else Open;
+  const Grid  := Input.Map(CharToCell);
+  var   Seen  := Input.Map(λch -> False);
+
+  match Start(Input) of
+    | Present(Pos) : var GuardPos := Pos
+    | Absent       : begin writeln('no start point found'); Exit; end
+  end;
+
+  Seen[GuardPos] := True;
+
+  var Facing  := Up;
+  var Turns   := 0;
+  var Visited := 1;
+
+  writeln('start: ', GuardPos.ToString);
+
+  while True do
+  begin
+    match Advance(Grid, GuardPos, Facing) of
+      | Moved(Pos)  : begin
+                        if not Seen[Pos] then begin Inc(Visited);  Seen[Pos] := True; end;
+                        GuardPos := Pos;
+                      end
+      | Turned(Dir) : begin Inc(Turns); Facing := Dir end
+      | Exited      : Break
+    end;
+  end;
+
+  writeln('turns: ', Turns);
+  writeln('visited: ', Visited);
+end.

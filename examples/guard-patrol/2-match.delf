@@ -1,0 +1,119 @@
+{$APPTYPE CONSOLE}
+program GuardPatrolMatch;
+
+{ examples/06-guard-patrol again, with rung 1 of sum types and match (19 Oct).
+  1-tuples.delf is the same program from 17 Oct, before them: there,
+  Advance returned a tuple of a plain enum and both payloads, only one of which
+  meant anything, and each case ended in a hand-written noreturn Unreachable.
+  Here Advance returns TStep, SPEC §9.1's own example, and delfc writes the
+  case statements and the Unreachable.
+
+  Input: the puzzle's published sample (AoC 2024 day 6, part 1).
+
+  Predicted output (Claude, 19 Oct, before compiling): the same as on 17 Oct,
+    start: 4 6
+    turns: 10
+    visited: 41
+  and the same diagnostics: none on Win32, one W1072 on Win64 in Start
+  (finding 6, poc/examples/README.md). }
+
+uses
+  System.SysUtils;
+
+type
+  TDir = (Up, Right, Down, Left);
+
+  TStep =
+    | Moved (Pos: (Integer, Integer))
+    | Turned(Facing: TDir)
+    | Exited;
+
+function Step(D: TDir): (Integer, Integer);
+begin
+  Exit( match D of
+          | Up    : ( 0, -1)
+          | Right : ( 1,  0)
+          | Down  : ( 0,  1)
+          | Left  : (-1,  0)
+        end
+      );
+end;
+
+function Turn(D: TDir): TDir;
+begin
+  Exit( match D of
+          | Up    : Right
+          | Right : Down
+          | Down  : Left
+          | Left  : Up
+        end
+      );
+end;
+
+// ' ' off the grid: Optional<Char> will say None instead
+function Lookup(const Grid: TArray<string>; const P: (Integer, Integer)): Char;
+begin
+  const (X, Y) := P;
+  if (Y < 0) or (Y >= Length(Grid))    or
+     (X < 0) or (X >= Length(Grid[Y])) then Exit( ' ' );
+  Exit( Grid[Y].Chars[X] );
+end;
+
+function Start(const Grid: TArray<string>): (Integer, Integer);
+begin
+  for var Y := 0 to High(Grid) do
+    if Grid[Y].Contains('^') then Exit( (Grid[Y].IndexOf('^'), Y) );
+  Exit( (-1, -1) );
+end;
+
+function Advance(const Grid: TArray<string>; const P: (Integer, Integer); D: TDir): TStep;
+begin
+  const (DX, DY) := Step(D);
+  const Next: (Integer, Integer) := (P[0] + DX, P[1] + DY);
+  Exit( match Lookup(Grid, Next) of
+          | ' ' : Exited
+          | '#' : Turned(Turn(D))
+          | _   : Moved(Next)
+        end
+      );
+end;
+
+begin
+  const Grid: TArray<string> := [
+    '....#.....',
+    '.........#',
+    '..........',
+    '..#.......',
+    '.......#..',
+    '..........',
+    '.#..^.....',
+    '........#.',
+    '#.........',
+    '......#...'];
+
+  var P       := Start(Grid);
+  var D       := Up;
+  var Turns   := 0;
+  var Visited := 1;
+  var Seen    : TArray<TArray<Boolean>>;
+  SetLength(Seen, Length(Grid), Length(Grid[0]));
+  Seen[P[1]][P[0]] := True;
+  WriteLn('start: ', P[0], ' ', P[1]);
+
+  while True do
+  begin
+    match Advance(Grid, P, D) of
+      | Moved(Q)  : begin
+                      const (QX, QY) := Q;
+                      if not Seen[QY][QX] then Inc(Visited);
+                      Seen[QY][QX] := True;
+                      P := Q;
+                    end
+      | Turned(E) : begin Inc(Turns); D := E end
+      | Exited    : Break
+    end;
+  end;
+
+  WriteLn('turns: ', Turns);
+  WriteLn('visited: ', Visited);
+end.

@@ -1,0 +1,134 @@
+{$APPTYPE CONSOLE}
+program GuardPatrolGrid;
+
+{ 2-match.delf (19 Oct, before Optional) with a point and a grid
+  (user, 23 Oct: Lookup, Start and Advance "read terribly for Delf code").
+  Exploring a next phase.
+
+  - Points are System.Types.TPoint (x, y, and +), not (Integer, Integer).
+  - TGrid<T> is in its own Delf unit, Demo.Grids (user). It keeps the [y][x]
+    order to itself, and it is total: off the grid it answers its border.
+  - TCell has three states (user): Open, Wall and Outside, the border. So
+    "off the grid" is back inside Advance's match, and the match covers
+    every cell with no `_`. The cost: Outside is a real TCell, a named
+    sentinel. 5-grid-optional removes even that.
+  - The input is a real constant (user), and the grid is made from it with
+    a lambda for the cells, not a Cell function used once.
+  - Seen is the grid mapped from TCell to Boolean (user); written here as a
+    TGrid<Boolean> of the same size, so Seen[Pos] works too.
+  - TryStart is Delphi's Try shape, on purpose (user, 23 Oct: "to make a
+    point here"): a Boolean, and the start through an out parameter, which
+    is undefined when it returns False. No exception, no (-1, -1).
+    5-grid-optional returns Optional<TPoint> instead.
+  - Names, not letters (user): GuardPos, Facing, Pos, Dir. Coordinates are
+    lower case.
+
+  Proposed, not in delfc (user, 23 Oct): declaring a sized array,
+    var Seen: array[Length(Grid), Length(Grid[0])] of Boolean;
+
+  Input: the puzzle's published sample (AoC 2024 day 6, part 1).
+
+  Predicted output (Claude, 23 Oct, before compiling): the same as before,
+    start: 4 6
+    turns: 10
+    visited: 41
+  No warnings on Win32. On Win64 with -W+IMPLICIT_CONVERSION_LOSS, three
+  W1072 (finding 6): one in TryStart (the 64-bit loop variable into Point),
+  and two in Demo.Grids, where Length meets Integer in Width and Height. }
+
+uses
+  System.SysUtils, System.Types, Demo.Grids;
+
+type
+  TDir  = (Up, Right, Down, Left);
+  TCell = (Open, Wall, Outside);
+
+  TStep =
+    | Moved (Pos: TPoint)
+    | Turned(Facing: TDir)
+    | Exited;
+
+const
+  Input: TArray<string> = [
+    '....#.....',
+    '.........#',
+    '..........',
+    '..#.......',
+    '.......#..',
+    '..........',
+    '.#..^.....',
+    '........#.',
+    '#.........',
+    '......#...'];
+
+function Step(Dir: TDir): TPoint;
+begin
+  Exit( match Dir of
+          | Up    : Point( 0, -1)
+          | Right : Point( 1,  0)
+          | Down  : Point( 0,  1)
+          | Left  : Point(-1,  0)
+        end
+      );
+end;
+
+function Turn(Dir: TDir): TDir;
+begin
+  Exit( match Dir of
+          | Up    : Right
+          | Right : Down
+          | Down  : Left
+          | Left  : Up
+        end
+      );
+end;
+
+// Delphi's Try shape, on purpose: Start is only meaningful when this returns True
+function TryStart(const Input: TArray<string>; out Start: TPoint): Boolean;
+begin
+  for var y := 0 to High(Input) do
+    if Input[y].Contains('^') then begin Start := Point(Input[y].IndexOf('^'), y); Exit( True ) end;
+  Exit( False );
+end;
+
+function Advance(const Grid: TGrid<TCell>; const GuardPos: TPoint; Facing: TDir): TStep;
+begin
+  const Next := GuardPos + Step(Facing);
+  Exit( match Grid[Next] of
+          | Outside : Exited
+          | Wall    : Turned(Turn(Facing))
+          | Open    : Moved(Next)
+        end
+      );
+end;
+
+begin
+  const Grid  := TGrid<TCell>.Create(Input, λCh -> if Ch = '#' then Wall else Open, Outside);
+  var Seen    := TGrid<Boolean>.Create(Grid.Width, Grid.Height, False);
+
+  var GuardPos : TPoint;
+  if TryStart(Input, GuardPos) then Seen[GuardPos] := True
+                               else begin writeln('no start point found'); Exit; end;
+
+  var Facing  := Up;
+  var Turns   := 0;
+  var Visited := 1;
+
+  writeln('start: ', GuardPos.x, ' ', GuardPos.y);
+
+  while True do
+  begin
+    match Advance(Grid, GuardPos, Facing) of
+      | Moved(Pos)  : begin
+                        if not Seen[Pos] then Inc(Visited);
+                        Seen[Pos] := True;
+                        GuardPos := Pos;
+                      end
+      | Turned(Dir) : begin Inc(Turns); Facing := Dir end
+      | Exited      : Break
+    end;
+  end;
+
+  writeln('turns: ', Turns);
+  writeln('visited: ', Visited);
+end.

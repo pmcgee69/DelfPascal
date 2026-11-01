@@ -113,8 +113,12 @@ Two decks, as PDFs in [`docs/`](docs/):
 - [EXPERIMENTS.md](EXPERIMENTS.md): the 49 experiments and what each settled.
 - [CORPUS.md](CORPUS.md): the code delfc is tested on, and how.
 - [PERFORMANCE.md](PERFORMANCE.md): delfc's output against hand-written Delphi and C++.
-- [snippets](snippets/): Delf as posted on the ADUG forum, exactly as written, some of it the
-  same code two ways side by side.
+- [snippets](snippets/): Delf as posted on the ADUG forum, exactly as written, the same code
+  two ways side by side.
+- [examples/guard-patrol](examples/guard-patrol/): Advent of Code 2024 day 6 in seven Delf
+  versions, each adding a feature (tuples, sum types and `match`, `Optional`, a generic grid,
+  lambdas), with what delfc writes from each.
+- [examples/hangman](examples/hangman/): a small game: `match` on strings, `Enumerate`.
 - [examples/natural-sort](examples/natural-sort/): a natural sort (`file2` before `file10`)
   in Delf, as delfc translates it, in plain Delphi and in C++23, all four checked against
   Explorer's order.

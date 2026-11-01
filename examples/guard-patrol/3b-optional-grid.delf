@@ -1,0 +1,163 @@
+{$APPTYPE CONSOLE}
+program GuardPatrolOptionalGrid;
+
+{ 3-optional.delf with a grid type (user, 23 Oct: "the real
+  issue here might be Grid[Y].Chars[X]"). The input is parsed once into
+  TGrid: the characters become cells there, and the [y][x] order stays inside
+  it. Outside, the grid is read the two ways todo-naming.md settles on:
+  brackets for a position known to be good (Grid[x, y], which raises), and
+  TryGetCell for one that might not be, which returns an Optional.
+  Coordinates are lower case (user).
+
+  A side step, kept (user, 23 Oct): points are still tuples here.
+  4-grid.delf goes on with TPoint and TGrid<T>.
+
+  Input: the puzzle's published sample (AoC 2024 day 6, part 1).
+
+  Predicted output (Claude, 23 Oct, before compiling): the same as before,
+    start: 4 6
+    turns: 10
+    visited: 41
+  No warnings on Win32. On Win64 with -W+IMPLICIT_CONVERSION_LOSS, one W1072
+  in Parse, where the 64-bit loop variables go into Start (finding 6). }
+
+uses
+  System.SysUtils;
+
+type
+  TDir  = (Up, Right, Down, Left);
+  TCell = (Open, Wall);
+
+  TStep =
+    | Moved (Pos: (Integer, Integer))
+    | Turned(Facing: TDir)
+    | Exited;
+
+  TGrid = record
+    Cells : TArray<TArray<TCell>>;          // [y][x]: the order stays in here
+    Start : (Integer, Integer);
+    function Contains(x, y: Integer): Boolean;
+    function GetCell(x, y: Integer): TCell;
+    function TryGetCell(x, y: Integer): Optional<TCell>;
+    property Items[x, y: Integer]: TCell read GetCell; default;
+  end;
+
+function TGrid.Contains(x, y: Integer): Boolean;
+begin
+  Exit( (y >= 0) and (y < Length(Cells))    and
+        (x >= 0) and (x < Length(Cells[y])) );
+end;
+
+function TGrid.GetCell(x, y: Integer): TCell;
+begin
+  if not Contains(x, y) then
+    raise ERangeError.CreateFmt('(%d, %d) is off the grid', [x, y]);
+  Exit( Cells[y][x] );
+end;
+
+function TGrid.TryGetCell(x, y: Integer): Optional<TCell>;
+begin
+  if not Contains(x, y) then Exit( Absent );
+  Exit( Present(Self[x, y]) );
+end;
+
+function Cell(C: Char): TCell;
+begin
+  Exit( match C of
+          | '#' : Wall
+          | _   : Open
+        end
+      );
+end;
+
+// the input's characters, read once: '^' marks the start, on an open cell
+function Parse(const Lines: TArray<string>): TGrid;
+begin
+  SetLength(Result.Cells, Length(Lines));
+  for var y := 0 to High(Lines) do
+  begin
+    SetLength(Result.Cells[y], Length(Lines[y]));
+    for var x := 0 to High(Result.Cells[y]) do
+    begin
+      const C = Lines[y].Chars[x];
+      Result.Cells[y][x] := Cell(C);
+      if C = '^' then Result.Start := (x, y);
+    end;
+  end;
+end;
+
+function Step(D: TDir): (Integer, Integer);
+begin
+  Exit( match D of
+          | Up    : ( 0, -1)
+          | Right : ( 1,  0)
+          | Down  : ( 0,  1)
+          | Left  : (-1,  0)
+        end
+      );
+end;
+
+function Turn(D: TDir): TDir;
+begin
+  Exit( match D of
+          | Up    : Right
+          | Right : Down
+          | Down  : Left
+          | Left  : Up
+        end
+      );
+end;
+
+function Advance(const Grid: TGrid; const P: (Integer, Integer); D: TDir): TStep;
+begin
+  const (x,  y)  := P;
+  const (dx, dy) := Step(D);
+  const (nx, ny) := (x + dx, y + dy);
+  Exit( match Grid.TryGetCell(nx, ny) of
+          | Absent        : Exited
+          | Present(Wall) : Turned(Turn(D))
+          | Present(Open) : Moved((nx, ny))
+        end
+      );
+end;
+
+begin
+  const Grid := Parse([
+    '....#.....',
+    '.........#',
+    '..........',
+    '..#.......',
+    '.......#..',
+    '..........',
+    '.#..^.....',
+    '........#.',
+    '#.........',
+    '......#...']);
+
+  var P       := Grid.Start;
+  var D       := Up;
+  var Turns   := 0;
+  var Visited := 1;
+  var Seen    : TArray<TArray<Boolean>>;
+  SetLength(Seen, Length(Grid.Cells), Length(Grid.Cells[0]));
+  const (sx, sy) := P;
+  Seen[sy][sx] := True;
+  WriteLn('start: ', sx, ' ', sy);
+
+  while True do
+  begin
+    match Advance(Grid, P, D) of
+      | Moved(Q)  : begin
+                      const (qx, qy) := Q;
+                      if not Seen[qy][qx] then Inc(Visited);
+                      Seen[qy][qx] := True;
+                      P := Q;
+                    end
+      | Turned(E) : begin Inc(Turns); D := E end
+      | Exited    : Break
+    end;
+  end;
+
+  WriteLn('turns: ', Turns);
+  WriteLn('visited: ', Visited);
+end.
