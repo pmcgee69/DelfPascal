@@ -113,6 +113,8 @@ Two decks, as PDFs in [`docs/`](docs/):
 - [EXPERIMENTS.md](EXPERIMENTS.md): the 49 experiments and what each settled.
 - [CORPUS.md](CORPUS.md): the code delfc is tested on, and how.
 - [PERFORMANCE.md](PERFORMANCE.md): delfc's output against hand-written Delphi and C++.
+- [snippets](snippets/): Delf as posted on the ADUG forum, exactly as written, some of it the
+  same code two ways side by side.
 - [examples/natural-sort](examples/natural-sort/): a natural sort (`file2` before `file10`)
   in Delf, as delfc translates it, in plain Delphi and in C++23, all four checked against
   Explorer's order.
