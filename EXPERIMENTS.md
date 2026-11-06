@@ -47,7 +47,12 @@ real code instead (see [CORPUS.md](CORPUS.md)).
   for `if`, false for `= True`, and takes neither arm of a `case`; `not B` differs between
   Win32 and Win64 (29).
 
-## Units, conditionals and real code (30–40, 44, 45)
+## Units, conditionals and real code (21, 30–40, 44, 45)
+
+- **Delphi loads delfc's parser** and walks its trees (21): tree-sitter's C API declared in
+  Delf, the same node counts as Python's, then 99 files of Delphi's own RTL read in 3.1 seconds; the C built
+  with C++Builder's compiler too, as DLLs or linked into the executable (21b). It became
+  [TreeSitter4D](https://github.com/pmcgee69/TreeSitter4D).
 
 - How often function results are discarded in real code (30). What a type alias and a
   constant carry into another unit (31). What an unused unit in `uses` costs (34).
@@ -71,5 +76,4 @@ Spring4D, the RTL) and C++. See [PERFORMANCE.md](PERFORMANCE.md).
 
 ## Planned
 
-What dcc32 infers by itself (19); whether Delphi can load delfc's parser (21); what an enum
-with explicit values loses (26).
+What dcc32 infers by itself (19); what an enum with explicit values loses (26).
