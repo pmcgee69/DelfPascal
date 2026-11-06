@@ -45,8 +45,8 @@ The design work itself, the specification, the notes and delfc's source, lives i
 
   Rename any Delphi file to `.delf` and nothing changes: the same output, no
   new errors .. but some increased checks as warnings or hints. 
-  delfc is checked against real code, over 17,000 files from the
-  Delphi RTL and VCL and 116 open-source repositories: [CORPUS.md](CORPUS.md).
+  delfc is checked against real code, 18,524 distinct files from the
+  Delphi RTL and VCL and 123 open-source repositories with some of their branches: [CORPUS.md](CORPUS.md).
 - **Better safety without red tape.** 
 
   A safety rule that makes the writer repeat themselves is a sign the syntax is missing something.
@@ -84,7 +84,7 @@ delfc, atm a proof of concept in Python on a tree-sitter grammar, translates:
 
 Plain Delphi passes through delfc byte-identical; it gets only checks. Every test's output
 compiles on dcc32 and dcc64 as predicted. On the large corpus, a Delphi file renamed to
-`.delf` gets an error in about 1.5% of cases, mostly conditional-compilation fragments.
+`.delf` gets an error of delfc's own in 0.8% of cases (148 of 18,524 files, 5 Nov 2026).
 
 ## What's planned
 

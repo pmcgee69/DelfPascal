@@ -2,35 +2,58 @@
 
 delfc is checked on real Delphi code, not only on its own tests. Two corpora:
 
-| | Files | What |
+| | 28 Oct 2026 | 6 Nov 2026 |
 |---|---|---|
-| **The core** | 2,012 | The Delphi 13 RTL and VCL, DUnit, DUnitX, Spring4D, DPM (the Delphi package manager), Dev-C++, and two smaller codebases |
-| **The large corpus** | 15,278 | 116 open-source repositories, shallow clones at pinned commits, listed below |
+| **Core** | 2,012 files | 2,016 files |
+| **Large corpus** | 15,278 files, 116 repositories | 21,516 files, 123 repositories, 16 branches |
+| **Read in a run** | | 23,532 files, 18,524 distinct |
+| **A full run** | about 25 min on 4 workers | about 40 min on 10 workers |
+| **Result** (5 Nov) | | plain output unchanged in every file; delfc's own error in 148 of 18,524 as `.delf` (0.8%) |
+
+What each holds:
+
+- **The core:** the Delphi 13 RTL and VCL, DUnit, DUnitX, Spring4D, DPM (the Delphi package
+  manager), Dev-C++, and two smaller codebases.
+
+- **The large corpus:** open-source repositories, shallow clones at pinned commits, and more
+  branches of some of them, all listed below. A file that is the same in a branch, or in two
+  repositories, is read once.
 
 ## How they're used
 
-- **The door.** Every file is translated twice: as plain Delphi, where the output must be the
-  file itself, byte for byte, and renamed to `.delf`, where any new error, warning or change is
-  the door a Delphi programmer would meet. A full run over the large corpus takes about 25
-  minutes on four worker processes; it runs after every change to delfc that reads or types
-  more code, and every difference from the previous run is explained before the change is kept.
+- **The door.** Every file is translated twice:
+
+  - **as plain Delphi**, where the output must be the file itself, byte for byte;
+  - **renamed to `.delf`**, where any new error, warning or change is the door a Delphi
+    programmer would meet.
+
+- **When the door runs.** A full run reads both corpora; it runs after every change to delfc
+  that reads or types more code, and every difference from the previous run is explained
+  before the change is kept.
+
 - **Calling units.** Each unit is also read as a used unit is, to see which of its types and
   routines a Delf file calling it would see.
+
 - **Surveys.** Questions about how Delphi is written in practice: where conditionals stand
   and how they're shaped, how often a function's result is discarded, which symbols each
   compiler defines.
+
 - **Comparing parsers.** The core was read by both tree-sitter-delphi13 and Olaf Monien's
   DX.DelphiLanguage; two lexer fixes found that way were merged into DX.
 
 The surveys found bugs in delfc that no test of its own would have, and a few latent bugs in
-the corpus's code; those are being reported to their authors privately first.
+the corpus's code; those are being reported to their authors privately.
 
 ## The repositories
 
-### System and runtime (15)
+### System and runtime (17)
 
 - [danieleteti/delphiguard](https://github.com/danieleteti/delphiguard)
 - [gabr42/OmniThreadLibrary](https://github.com/gabr42/OmniThreadLibrary)
+  - branch `v4-develop`
+  - branch `v4-develop-2`
+  - branch `mobile`
+- [gecko-71/GHttpsIOCPSvr](https://github.com/gecko-71/GHttpsIOCPSvr)
 - [grijjy/DelphiPlatformTimerQueue](https://github.com/grijjy/DelphiPlatformTimerQueue)
 - [grijjy/DelphiScalableClientSockets](https://github.com/grijjy/DelphiScalableClientSockets)
 - [grijjy/GrijjyFoundation](https://github.com/grijjy/GrijjyFoundation)
@@ -40,12 +63,14 @@ the corpus's code; those are being reported to their authors privately first.
 - [sempare/sempare-delphi-async](https://github.com/sempare/sempare-delphi-async)
 - [sempare/sempare-delphi-fiber-generator](https://github.com/sempare/sempare-delphi-fiber-generator)
 - [sempare/sempare-delphi-managed](https://github.com/sempare/sempare-delphi-managed)
+- [sivv/cocinasync](https://bitbucket.org/sivv/cocinasync) (Bitbucket)
+  - branch `develop`
 - [VSoftTechnologies/VSoft.Awaitable](https://github.com/VSoftTechnologies/VSoft.Awaitable)
 - [VSoftTechnologies/VSoft.CancellationToken](https://github.com/VSoftTechnologies/VSoft.CancellationToken)
 - [VSoftTechnologies/VSoft.ThreadpoolTimer](https://github.com/VSoftTechnologies/VSoft.ThreadpoolTimer)
 - [VSoftTechnologies/VSoft.WeakReferences](https://github.com/VSoftTechnologies/VSoft.WeakReferences)
 
-### Libraries (57)
+### Libraries (60)
 
 - [ahausladen/JsonDataObjects](https://github.com/ahausladen/JsonDataObjects)
 - [ahausladen/PdfiumLib](https://github.com/ahausladen/PdfiumLib)
@@ -63,6 +88,8 @@ the corpus's code; those are being reported to their authors privately first.
 - [grijjy/DelphiMongoDB](https://github.com/grijjy/DelphiMongoDB)
 - [grijjy/GrijjyCloudLogger](https://github.com/grijjy/GrijjyCloudLogger)
 - [IndySockets/Indy](https://github.com/IndySockets/Indy)
+  - branch `Indy11-preparation`
+  - branch `Indy-10.7`
 - [MHumm/DelphiEncryptionCompendium](https://github.com/MHumm/DelphiEncryptionCompendium)
 - [ModernDelphiWorks/ModernSyntax](https://github.com/ModernDelphiWorks/ModernSyntax)
 - [neslib/Neslib](https://github.com/neslib/Neslib)
@@ -74,15 +101,23 @@ the corpus's code; those are being reported to their authors privately first.
 - [omonien/DX.DisplayInfo](https://github.com/omonien/DX.DisplayInfo)
 - [omonien/DX.HttpSys](https://github.com/omonien/DX.HttpSys)
 - [omonien/DX.Logger](https://github.com/omonien/DX.Logger)
+  - branch `feature/callstack`
 - [omonien/DX.Pdfium4D](https://github.com/omonien/DX.Pdfium4D)
 - [omonien/DX.Stream](https://github.com/omonien/DX.Stream)
 - [omonien/DX.TOML](https://github.com/omonien/DX.TOML)
 - [omonien/DXMessages](https://github.com/omonien/DXMessages)
 - [omonien/DXVersion](https://github.com/omonien/DXVersion)
+- [paolo-rossi/delphi-neon](https://github.com/paolo-rossi/delphi-neon)
 - [project-jedi/jcl](https://github.com/project-jedi/jcl)
 - [RomanYankovsky/DelphiAST](https://github.com/RomanYankovsky/DelphiAST)
 - [sempare/sempare-delphi-streams](https://github.com/sempare/sempare-delphi-streams)
 - [sempare/sempare-delphi-template-engine](https://github.com/sempare/sempare-delphi-template-engine)
+- [sglienke/spring4d](https://bitbucket.org/sglienke/spring4d) (Bitbucket)
+  - branch `develop`
+  - branch `feature/reactive`
+  - branch `feature/coroutines`
+  - branch `feature/container-refactoring`
+  - branch `feature/priorityqueue`
 - [VSoftTechnologies/Delphi-Fluent-JSON](https://github.com/VSoftTechnologies/Delphi-Fluent-JSON)
 - [VSoftTechnologies/Delphi-Fluent-XML](https://github.com/VSoftTechnologies/Delphi-Fluent-XML)
 - [VSoftTechnologies/Delphi-Mocks](https://github.com/VSoftTechnologies/Delphi-Mocks)
@@ -96,6 +131,7 @@ the corpus's code; those are being reported to their authors privately first.
 - [VSoftTechnologies/VSoft.HttpClient](https://github.com/VSoftTechnologies/VSoft.HttpClient)
 - [VSoftTechnologies/VSoft.Messaging](https://github.com/VSoftTechnologies/VSoft.Messaging)
 - [VSoftTechnologies/VSoft.OperationResult](https://github.com/VSoftTechnologies/VSoft.OperationResult)
+- [VSoftTechnologies/VSoft.Process](https://github.com/VSoftTechnologies/VSoft.Process)
 - [VSoftTechnologies/VSoft.SemanticVersion](https://github.com/VSoftTechnologies/VSoft.SemanticVersion)
 - [VSoftTechnologies/VSoft.System.Console](https://github.com/VSoftTechnologies/VSoft.System.Console)
 - [VSoftTechnologies/VSoft.System.TimeProvider](https://github.com/VSoftTechnologies/VSoft.System.TimeProvider)
@@ -105,11 +141,13 @@ the corpus's code; those are being reported to their authors privately first.
 - [VSoftTechnologies/VSoft.WindowsCredentialManager](https://github.com/VSoftTechnologies/VSoft.WindowsCredentialManager)
 - [VSoftTechnologies/VSoft.YAML](https://github.com/VSoftTechnologies/VSoft.YAML)
 
-### Frameworks (5)
+### Frameworks (6)
 
 - [danieleteti/columbusegg4delphi](https://github.com/danieleteti/columbusegg4delphi)
 - [danieleteti/delphidicontainer](https://github.com/danieleteti/delphidicontainer)
 - [danieleteti/delphimvcframework](https://github.com/danieleteti/delphimvcframework)
+  - branch `dev_v3.5.0`
+- [davidlastrucci/Trysil](https://github.com/davidlastrucci/Trysil)
 - [grijjy/MvvmStarterKit](https://github.com/grijjy/MvvmStarterKit)
 - [synopse/mORMot2](https://github.com/synopse/mORMot2)
 
@@ -117,8 +155,12 @@ the corpus's code; those are being reported to their authors privately first.
 
 - [cnpack/cnvcl](https://github.com/cnpack/cnvcl)
 - [JAM-Software/Virtual-TreeView](https://github.com/JAM-Software/Virtual-TreeView)
+  - branch `V7_stable`
 - [project-jedi/jvcl](https://github.com/project-jedi/jvcl)
 - [TurboPack/SynEdit](https://github.com/TurboPack/SynEdit)
+  - branch `11Alexandria`
+  - branch `DelphiFeatures`
+  - branch `multicursor`
 - [VSoftTechnologies/VSoft.VirtualListView](https://github.com/VSoftTechnologies/VSoft.VirtualListView)
 
 ### IDE plug-ins (5)
@@ -138,9 +180,10 @@ the corpus's code; those are being reported to their authors privately first.
 - [VSoftTechnologies/DelphiUsesAnalyzer](https://github.com/VSoftTechnologies/DelphiUsesAnalyzer)
 - [VSoftTechnologies/DPackGen](https://github.com/VSoftTechnologies/DPackGen)
 
-### Samples (6)
+### Samples (7)
 
 - [danieleteti/dmvcframeworktheofficialguideexamples](https://github.com/danieleteti/dmvcframeworktheofficialguideexamples)
+- [Embarcadero/RADStudio13Demos](https://github.com/Embarcadero/RADStudio13Demos)
 - [grijjy/EntityComponentSystems](https://github.com/grijjy/EntityComponentSystems)
 - [grijjy/JustAddCode](https://github.com/grijjy/JustAddCode)
 - [omonien/DAPUG-2026](https://github.com/omonien/DAPUG-2026)
