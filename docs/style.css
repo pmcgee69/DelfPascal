@@ -41,6 +41,13 @@ header.site nav a:hover { color: var(--accent); }
 h1, h2, h3 { font-family: "Inter", system-ui, sans-serif; line-height: 1.25; letter-spacing: -0.015em; }
 h1 { font-size: 2.1rem; margin: 2.4rem 0 0.6rem; }
 h2 { font-size: 1.35rem; margin: 2.4rem 0 0.6rem; }
+h1.with-badge { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 1rem; }
+.badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted);
+}
+.badge svg { color: var(--muted); flex: none; }
 p.lede { font-size: 1.15rem; color: var(--muted); margin-top: 0; }
 p.meta { font-family: "Inter", system-ui, sans-serif; font-size: 0.85rem; color: var(--muted); }
 
