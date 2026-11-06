@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delf</title>
+<meta name="description" content="Delf: Delphi with a modern, functional-influenced type system, transpiled to plain Delphi.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site">
+  <a class="home" href="./">Delf</a>
+  <nav><a href="#videos">Videos</a><a href="#articles">Articles</a><a href="#slides">Slides</a><a href="https://github.com/pmcgee69/DelfPascal">GitHub</a></nav>
+</header>
+<main>
+<h1>Delf</h1>
+<p class="lede">Delphi with a modern, functional-influenced type system, transpiling to plain Delphi.</p>
+
+<p>A Delf file is Delphi with additions of syntax and code-correctness: sum types and pattern matching in place of nil and sentinel values, tuples, lambdas with inferred types, no implicit conversions, exhaustive cases. A transpiler, <strong>delfc</strong>, turns it into readable, standard Delphi that a Delphi programmer could have written by hand and can step through in the debugger.</p>
+
+<pre><code class="language-delphi">WriteLn('passed: ', Scores.Filter(IsPass).Map(.ToString).Join(', '));
+
+// the plain Delphi it stands for, with Shown(N) answering N.ToString
+WriteLn('passed: ', TArrays.Join(
+                        TArrays.Map&lt;Integer, string&gt;(
+                            TArrays.Filter&lt;Integer&gt;(Scores, IsPass), Shown), ', '));</code></pre>
+
+<p>Rename any Delphi file to <code>.delf</code> and nothing changes but some extra checks. delfc is tested on over 17,000 files of real Delphi. The design filter is <strong>better safety without red tape</strong>: a safety rule that makes the writer repeat themselves is a sign the syntax is missing something.</p>
+
+<h2 id="videos">Videos</h2>
+<ul class="videos">
+  <li><a href="https://www.youtube.com/watch?v=JXxUftwcHmQ">
+    <img src="https://i.ytimg.com/vi/JXxUftwcHmQ/hqdefault.jpg" alt="" loading="lazy">
+    <span class="title">A Brief Introduction to Delf Pascal &amp; Zed</span></a>
+    <p>Delf in the Zed editor: what it adds to Delphi, and what delfc writes from it.</p></li>
+  <li><a href="https://www.youtube.com/watch?v=WRGRUzsjU-g">
+    <img src="https://i.ytimg.com/vi/WRGRUzsjU-g/hqdefault.jpg" alt="" loading="lazy">
+    <span class="title">Delphi Pre-Processor Starter</span></a>
+    <p>Rules that check and rewrite standard Delphi, on a tree-sitter parse: the <a href="https://github.com/pmcgee69/delphi-preprocessor-starter">starter repository</a>.</p></li>
+</ul>
+
+<h2 id="articles">Articles</h2>
+<ul class="cards">
+  <li><a class="title" href="generic-inference.html">Generic type inference in Delf: inside and outside</a>
+    <p>How delfc works out a generic call's type arguments, from its arguments and from where its value goes, and when you must write one.</p></li>
+</ul>
+
+<h2 id="slides">Slides</h2>
+<ul class="cards">
+  <li><a class="title" href="Finding-the-start.pdf">Finding the start</a>
+    <p>One search, written every way Delf allows, and what delfc writes.</p></li>
+  <li><a class="title" href="Delf-big-ideas.pdf">The big ideas</a>
+    <p>The present as a proof of concept, then the future.</p></li>
+</ul>
+
+<h2>More</h2>
+<p>The approach, what works today, what's planned and the evidence are in the <a href="https://github.com/pmcgee69/DelfPascal">DelfPascal repository</a>: its <a href="https://github.com/pmcgee69/DelfPascal/blob/main/EXPERIMENTS.md">experiments</a>, the <a href="https://github.com/pmcgee69/DelfPascal/blob/main/CORPUS.md">corpus</a> delfc is tested on, its <a href="https://github.com/pmcgee69/DelfPascal/blob/main/PERFORMANCE.md">performance</a> against hand-written Delphi and C++, and worked <a href="https://github.com/pmcgee69/DelfPascal/tree/main/examples">examples</a>.</p>
+</main>
+<footer class="site">Paul McGee · <a href="https://github.com/pmcgee69">github.com/pmcgee69</a></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/delphi.min.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>
