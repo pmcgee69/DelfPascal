@@ -2,6 +2,8 @@
 
 **Delphi with a modern functional-influenced type system, transpiling to plain Delphi.**
 
+**Website: [pmcgee69.github.io/DelfPascal](https://pmcgee69.github.io/DelfPascal/)**: videos, articles and the slides.
+
 Delf is an aspirational Delphi preprocessor design project. 
 A Delf file is Delphi with additions of syntax and code-correctness:
 - sum types (`Optional`, Rust Results) and
