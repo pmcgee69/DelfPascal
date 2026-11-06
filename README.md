@@ -29,6 +29,9 @@ A stricter, **more** functional, **Paskell**, is a separate idea for later.
 This repository is the public summary: the approach, what works today, what's planned, and the evidence. 
 The design work itself, the specification, the notes and delfc's source, lives in a private repository for now.
 
+<img width="1250" height="812" alt="image" src="https://github.com/user-attachments/assets/3ca7c18d-6d75-4972-948a-f89e12f3fb9a" />
+
+
 ## The approach
 
 - **Stage 1 changes declarations; Stage 2 changes control flow.**
