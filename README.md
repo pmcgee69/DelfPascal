@@ -43,7 +43,8 @@ The design work itself, the specification, the notes and delfc's source, lives i
 
   Every claim about what dcc32 does is a prediction until it
   has been compiled, and the prediction is written down *before* the experiment runs, so a
-  wrong one stays recorded as wrong. 49 experiments so far: [EXPERIMENTS.md](EXPERIMENTS.md).
+  wrong one stays recorded as wrong. 60 experiments so far; the first 49 are summarised in
+  [EXPERIMENTS.md](EXPERIMENTS.md).
 - **The Door.** 
 
   Rename any Delphi file to `.delf` and nothing changes: the same output, no
@@ -68,10 +69,16 @@ delfc, atm a proof of concept in Python on a tree-sitter grammar, translates:
   tuples and destructuring, 
   record literals, 
   UFCS (`Xs.Map(F)` for `Map(Xs, F)`),
-  `const X := …`, 
+  a member as a function (`Xs.Map(.ToString)` for `Xs.Map(λx -> x.ToString)`),
+  `const X := …`, and its short form `X ← …`,
   `for const`, 
   `for var (i, X) in Xs.Enumerate`, 
   `[0..10_000]`
+- **A library** delfc adds as needed, in plain Delphi units: `Filter`, `Map`, `Join`, `Count`,
+  `Max`, `Find`, `Take`, `ZipWith`, `Iota`, `CallN` and more on arrays, and `Optional`'s own.
+- **Errors where they belong:** a name declared nowhere is an error where it's used, not
+  a confusing one later; so is a value given to a `const` binding, or a reserved word used as
+  a name. delfc says what to write, where it can.
 - **Sum types and `match`**
   exhaustive, 
   with nested patterns, 
@@ -83,7 +90,14 @@ delfc, atm a proof of concept in Python on a tree-sitter grammar, translates:
   including the project's own builds from its `.dproj`, 
   and constant arrays' lengths counted against their entries in every configuration.
 - **Real projects:** 
-  the units a file uses are read, for their types, routines and helpers, with names resolved as dcc32 resolves them.
+  the units a file uses are read, for their types, routines and helpers, with names resolved as dcc32 resolves them;
+  a project's `.delf` files built by dcc64 or dcc32, its messages mapped back to the Delf lines.
+- **The editor:** a [Zed](https://zed.dev) extension and a language server, not yet published
+  (the [video](https://www.youtube.com/watch?v=JXxUftwcHmQ) shows them). Highlighting, with
+  functions and methods told apart by what a call really calls; delfc's errors as you type,
+  dcc64's once typing pauses; inferred types as ghost text; hover on any name, a generic
+  call's inferred type arguments included; go to definition, into used units and the RTL;
+  find references; completion of members and unit names; build tasks.
 
 Plain Delphi passes through delfc byte-identical; it gets only checks. Every test's output
 compiles on dcc32 and dcc64 as predicted. On the large corpus, a Delphi file renamed to
@@ -127,6 +141,9 @@ Two decks, as PDFs in [`docs/`](docs/):
 - [examples/natural-sort](examples/natural-sort/): a natural sort (`file2` before `file10`)
   in Delf, as delfc translates it, in plain Delphi and in C++23, all four checked against
   Explorer's order.
+- [delphi-preprocessor-starter](https://github.com/pmcgee69/delphi-preprocessor-starter): the
+  core of delfc as a starting point for your own rules on standard Delphi, in Python and in
+  Delphi, with a Zed extension.
 - [TreeSitter4D](https://github.com/pmcgee69/TreeSitter4D): tree-sitter built with C++Builder
   and used from Delphi and C++Builder programs, with the same program in Delf beside them, and
   delfc's output.
