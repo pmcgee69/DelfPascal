@@ -1,4 +1,4 @@
-```pascal
+```python
 // back arrow means Const x := ...
 begin
       FnCharToCell  ← λ(ch: Char) -> if ch = '#' then Wall   { Type Assertion }
@@ -11,7 +11,7 @@ begin
 end;
 ```
 
-```pascal
+```python
 // 'normal'
 begin
   const FnCharToCell := λ(ch: Char) -> if ch = '#' then Wall   { Type Assertion }
