@@ -58,6 +58,8 @@ The design work itself, the specification, the notes and delfc's source, lives i
 
   delfc's output should be as fast as good hand-written Delphi: [PERFORMANCE.md](PERFORMANCE.md).
 
+<img width="1552" height="737" alt="image" src="https://github.com/user-attachments/assets/43cb6612-71c5-40e0-8ce4-2eb810ce21c7" />
+
 ## What works today
 
 delfc, atm a proof of concept in Python on a tree-sitter grammar, translates:
