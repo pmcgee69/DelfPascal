@@ -105,6 +105,33 @@ Plain Delphi passes through delfc byte-identical; it gets only checks. Every tes
 compiles on dcc32 and dcc64 as predicted. On the large corpus, a Delphi file renamed to
 `.delf` gets an error of delfc's own in 0.8% of cases (148 of 18,524 files, 5 Nov 2026).
 
+## Around Delf: the preprocessor starter and TreeSitter4D
+
+Two public repositories grew out of delfc, for standard Delphi today.
+
+**[delphi-preprocessor-starter](https://github.com/pmcgee69/delphi-preprocessor-starter)**
+is delfc's core as a starting point for your own rules: checks that report and rewrites that
+change the source, on a tree-sitter parse of plain Delphi. Seven example rules (`with`
+statements, `Assert` messages, merged `uses` clauses, `case` on strings, auto properties and
+more), each a few lines, tested against expected output, and run over a whole codebase before
+being trusted. The same engine and rules in Python and in Delphi; over Delphi 13's
+`source\rtl\common` the two agree line for line and byte for byte.
+
+- **In Zed:** the rules underline what they would change as you type, hover shows the new
+  text, and a key applies it.
+- **In the Delphi IDE:** a `.dpps` source is rewritten by the rules in a project's
+  pre-build event, run by `delphipp.exe`, itself built in the IDE from `delphipp.dproj` (no
+  Python needed); the rules' errors are listed in the Messages pane on the source's lines. An
+  IDE package shows what the rules change in the editor as you type, with a hover.
+
+**[TreeSitter4D](https://github.com/pmcgee69/TreeSitter4D)** is tree-sitter, the parsing
+library under all of this, built with C++Builder's compilers and used from Delphi and
+C++Builder programs, Win64 and Win32. The C links straight into the executable with `{$L}`, so
+there are no DLLs unless you want them; a [release](https://github.com/pmcgee69/TreeSitter4D/releases)
+(v0.2.0) carries the C compiled, so nothing but Delphi is needed. The same tree walker is
+written in Delphi, C++17, C++23 and Delf, with delfc's output beside it. The starter's Delphi
+side is built on it.
+
 ## What's planned
 
 - **Language:** Delf enums scoped in the output; `match` with guards and several
@@ -143,12 +170,6 @@ Two decks, as PDFs in [`docs/`](docs/):
 - [examples/natural-sort](examples/natural-sort/): a natural sort (`file2` before `file10`)
   in Delf, as delfc translates it, in plain Delphi and in C++23, all four checked against
   Explorer's order.
-- [delphi-preprocessor-starter](https://github.com/pmcgee69/delphi-preprocessor-starter): the
-  core of delfc as a starting point for your own rules on standard Delphi, in Python and in
-  Delphi, with a Zed extension. In the Delphi IDE too: a `.dpps` source is rewritten by the
-  rules in a project's pre-build event, run by `delphipp.exe`, which is itself built in the IDE
-  from `delphipp.dproj` (no Python needed), the rules' errors listed in the Messages pane on the
-  source's lines; and an IDE package shows what the rules change in the editor as you type.
-- [TreeSitter4D](https://github.com/pmcgee69/TreeSitter4D): tree-sitter built with C++Builder
-  and used from Delphi and C++Builder programs, with the same program in Delf beside them, and
-  delfc's output.
+- [delphi-preprocessor-starter](https://github.com/pmcgee69/delphi-preprocessor-starter) and
+  [TreeSitter4D](https://github.com/pmcgee69/TreeSitter4D): see
+  [Around Delf](#around-delf-the-preprocessor-starter-and-treesitter4d).
