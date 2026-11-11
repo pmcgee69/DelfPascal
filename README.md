@@ -124,8 +124,10 @@ each tested against expected output, and run over a whole codebase before being 
   Python needed); the rules' errors are listed in the Messages pane on the source's lines.
   dcc's own errors name the `.dpps` and its lines too: the generated `.pas` carries dcc's
   `{$LINE N 'file'}` directive, so a double-click opens the source, and the debugger steps
-  through it ([the video](https://youtu.be/LJM2JrihDWU)). An IDE package shows what the rules
-  change in the editor as you type, with a hover.
+  through it ([the video](https://youtu.be/LJM2JrihDWU)). The example's footnotes after `end.`
+  become XMLDoc, and Help Insight shows them, with a link to the `.dpps`
+  ([the screenshot](https://github.com/pmcgee69/delphi-preprocessor-starter/blob/main/examples/ide/footnotes-help-insight.png)).
+  An IDE package shows what the rules change in the editor as you type, with a hover.
 
 **[TreeSitter4D](https://github.com/pmcgee69/TreeSitter4D)** is tree-sitter, the parsing
 library under all of this, built with C++Builder's compilers and used from Delphi and
