@@ -145,7 +145,10 @@ Two decks, as PDFs in [`docs/`](docs/):
   Explorer's order.
 - [delphi-preprocessor-starter](https://github.com/pmcgee69/delphi-preprocessor-starter): the
   core of delfc as a starting point for your own rules on standard Delphi, in Python and in
-  Delphi, with a Zed extension.
+  Delphi, with a Zed extension. In the Delphi IDE too: a `.dpps` source is rewritten by the
+  rules in a project's pre-build event, run by `delphipp.exe`, which is itself built in the IDE
+  from `delphipp.dproj` (no Python needed), the rules' errors listed in the Messages pane on the
+  source's lines; and an IDE package shows what the rules change in the editor as you type.
 - [TreeSitter4D](https://github.com/pmcgee69/TreeSitter4D): tree-sitter built with C++Builder
   and used from Delphi and C++Builder programs, with the same program in Delf beside them, and
   delfc's output.
