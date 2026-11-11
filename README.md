@@ -111,10 +111,10 @@ Two public repositories grew out of delfc, for standard Delphi today.
 
 **[delphi-preprocessor-starter](https://github.com/pmcgee69/delphi-preprocessor-starter)**
 is delfc's core as a starting point for your own rules: checks that report and rewrites that
-change the source, on a tree-sitter parse of plain Delphi. Seven example rules (`with`
-statements, `Assert` messages, merged `uses` clauses, `case` on strings, auto properties and
-more), each a few lines, tested against expected output, and run over a whole codebase before
-being trusted. The same engine and rules in Python and in Delphi; over Delphi 13's
+change the source, on a tree-sitter parse of plain Delphi. Nine example rules (`with`
+statements, `Assert` messages, merged `uses` clauses, `case` on strings, auto properties,
+footnotes after `end.` that become XMLDoc, `[Derive(ToString)]` on an enumeration, and more),
+each tested against expected output, and run over a whole codebase before being trusted. The same engine and rules in Python and in Delphi; over Delphi 13's
 `source\rtl\common` the two agree line for line and byte for byte.
 
 - **In Zed:** the rules underline what they would change as you type, hover shows the new
