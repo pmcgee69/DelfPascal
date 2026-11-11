@@ -37,7 +37,7 @@ type
 function Bare(const D: string): string;
 begin
   const T = D.TrimLeft(['0']);
-  Exit( if T = '' then '0' else T );
+  exit( if T = '' then '0' else T );
 end;
 
 // two runs of digits by value: the shorter is smaller, then digit by digit;
@@ -46,15 +46,16 @@ function CompareDigits(const A, B: string): Integer;
 begin
   const X = Bare(A);
   const Y = Bare(B);
-  if X.Length <> Y.Length then Exit( CompareValue(X.Length, Y.Length) );
-  if X <> Y then Exit( CompareStr(X, Y) );
-  Exit( CompareValue(B.Length, A.Length) );
+  if X.Length <> Y.Length then 
+                 exit( CompareValue(X.Length, Y.Length) );
+  if X <> Y then exit( CompareStr(X, Y) )
+            else exit( CompareValue(B.Length, A.Length) );
 end;
 
 // digits against digits by value, text against text ignoring case, digits before text
 function CompareChunks(const A, B: TChunk): Integer;
 begin
-  Exit( match (A, B) of
+  exit( match (A, B) of
           | (Digits(X), Digits(Y)) : CompareDigits(X, Y)
           | (Digits(_), Text(_))   : -1
           | (Text(_),   Digits(_)) : 1
@@ -66,16 +67,16 @@ end;
 function Chunks(const S: string): TArray<TChunk>;
 begin
   Result := [];
-  var i := 1;
+  var  i := 1;
   while i <= S.Length do
   begin
     const IsDigits = S[i].IsDigit;
-    var j := i;
-    while (j <= S.Length) and (S[j].IsDigit = IsDigits) do Inc(j);
+    var   j := i;
+          while (j <= S.Length) and (S[j].IsDigit = IsDigits) do Inc(j);
     const Run = Copy(S, i, j - i);
     const Chunk: TChunk := if IsDigits then Digits(Run) else Text(Run);
-    Result := Result + [Chunk];
-    i := j;
+          Result := Result + [Chunk];
+          i := j;
   end;
 end;
 
@@ -85,12 +86,12 @@ begin
   const X = Chunks(A);
   const Y = Chunks(B);
   const N = Min(X.Length, Y.Length);
-  for const (I, P) in X.Take(N).Enumerate do
-  begin
-    const C = CompareChunks(P, Y[I]);
-    if C <> 0 then Exit( C );
-  end;
-  Exit( CompareValue(X.Length, Y.Length) );
+	    for const (I, P) in X.Take(N).Enumerate do 
+    	begin
+		  const C = CompareChunks(P, Y[I]);
+		  if C <> 0 then exit( C );
+	    end;
+	    exit( CompareValue(X.Length, Y.Length) );
 end;
 
 // sorted by Compare, and names it calls equal (README.md, Readme.md) by their
@@ -108,7 +109,7 @@ end;
 
 function Explorer(const A, B: string): Integer;
 begin
-  Exit( StrCmpLogicalW(PChar(A), PChar(B)) );
+  exit( StrCmpLogicalW(PChar(A), PChar(B)) );
 end;
 
 const
@@ -124,9 +125,9 @@ begin
   begin
     const Ours = Sorted(Names, NaturalCompare);
     const Theirs = Sorted(Names, Explorer);
-    for var i := 0 to High(Ours) do
-      Writeln(Ours[i].PadRight(28), Theirs[i].PadRight(28), if Ours[i] = Theirs[i] then '' else '<- differs');
-    Exit;
+		  for var i := 0 to High(Ours) do
+			writeln(Ours[i].PadRight(28), Theirs[i].PadRight(28), if Ours[i] = Theirs[i] then '' else '<- differs');
+		  exit;
   end;
   const Ours = Sorted(TFile.ReadAllLines(ParamStr(1), TEncoding.UTF8), NaturalCompare);
   var Disagree := 0;
@@ -136,6 +137,6 @@ begin
       Inc(Disagree);
       Writeln(Ours[i].PadRight(44), ' before  ', Ours[i + 1]);
     end;
-  Writeln(Length(Ours), ' names: Explorer puts ', Disagree, ' of ', High(Ours),
+  writeln(Length(Ours), ' names: Explorer puts ', Disagree, ' of ', High(Ours),
           ' neighbours the other way round');
 end.

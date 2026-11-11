@@ -123,22 +123,22 @@ const
 // the names above, beside Explorer's order; or, given a file of names, one per
 // line, the neighbours in our order that Explorer puts the other way round
 begin
-  if ParamCount = 0 then
-  begin
-    const Ours = Sorted(Names, NaturalCompare);
-    const Theirs = Sorted(Names, Explorer);
-    for var i := 0 to High(Ours) do
-      Writeln(Ours[i].PadRight(28), Theirs[i].PadRight(28), if Ours[i] = Theirs[i] then '' else '<- differs');
-    Exit;
-  end;
-  const Ours = Sorted(TFile.ReadAllLines(ParamStr(1), TEncoding.UTF8), NaturalCompare);
+	  if ParamCount = 0 then
+	  begin
+		const Ours = Sorted(Names, NaturalCompare);
+		const Theirs = Sorted(Names, Explorer);
+		for var i := 0 to High(Ours) do
+		  writeln(Ours[i].PadRight(28), Theirs[i].PadRight(28), if Ours[i] = Theirs[i] then '' else '<- differs');
+		Exit;
+	  end;
+	  const Ours = Sorted(TFile.ReadAllLines(ParamStr(1), TEncoding.UTF8), NaturalCompare);
   var Disagree := 0;
-  for var i := 0 to High(Ours) - 1 do
-    if Explorer(Ours[i], Ours[i + 1]) > 0 then
-    begin
-      Inc(Disagree);
-      Writeln(Ours[i].PadRight(44), ' before  ', Ours[i + 1]);
-    end;
-  Writeln(Length(Ours), ' names: Explorer puts ', Disagree, ' of ', High(Ours),
-          ' neighbours the other way round');
+	  for var i := 0 to High(Ours) - 1 do
+		if Explorer(Ours[i], Ours[i + 1]) > 0 then
+		begin
+		  Inc(Disagree);
+		  writeln(Ours[i].PadRight(44), ' before  ', Ours[i + 1]);
+		end;
+	  writeln(Length(Ours), ' names: Explorer puts ', Disagree, ' of ', High(Ours),
+			  ' neighbours the other way round');
 end.
