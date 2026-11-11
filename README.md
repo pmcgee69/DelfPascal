@@ -121,8 +121,11 @@ each tested against expected output, and run over a whole codebase before being 
   text, and a key applies it.
 - **In the Delphi IDE:** a `.dpps` source is rewritten by the rules in a project's
   pre-build event, run by `delphipp.exe`, itself built in the IDE from `delphipp.dproj` (no
-  Python needed); the rules' errors are listed in the Messages pane on the source's lines. An
-  IDE package shows what the rules change in the editor as you type, with a hover.
+  Python needed); the rules' errors are listed in the Messages pane on the source's lines.
+  dcc's own errors name the `.dpps` and its lines too: the generated `.pas` carries dcc's
+  `{$LINE N 'file'}` directive, so a double-click opens the source, and the debugger steps
+  through it. An IDE package shows what the rules change in the editor as you type, with a
+  hover.
 
 **[TreeSitter4D](https://github.com/pmcgee69/TreeSitter4D)** is tree-sitter, the parsing
 library under all of this, built with C++Builder's compilers and used from Delphi and
