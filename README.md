@@ -130,7 +130,8 @@ each tested against expected output, and run over a whole codebase before being 
   Its enumeration `TMood = (Calm, Excited)`, marked `[Derive(ToString)]`, gets a record helper
   whose `ToString` the greeting prints, `(Excited)`; every line of the generated code names the
   attribute's line, so an error or a step in it lands there. Its `case` on strings becomes an
-  `if` chain that keeps each arm on its own line.
+  `if` chain that keeps each arm on its own line
+  ([the second video](https://youtu.be/-hhXFSDIgsY)).
   An IDE package shows what the rules change in the editor as you type, with a hover.
 
 **[TreeSitter4D](https://github.com/pmcgee69/TreeSitter4D)** is tree-sitter, the parsing
