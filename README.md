@@ -161,7 +161,7 @@ side is built on it.
 
 ## The slides
 
-Two decks, as PDFs in [`docs/`](docs/):
+Three decks, as PDFs in [`docs/`](docs/):
 
 - [*Finding the start*](docs/Finding-the-start.pdf): one search, written every way Delf allows, and what delfc writes.
 - [*The big ideas*](docs/Delf-big-ideas.pdf): the present as a proof of concept, then the future.
