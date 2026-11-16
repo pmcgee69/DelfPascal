@@ -165,6 +165,7 @@ Two decks, as PDFs in [`docs/`](docs/):
 
 - [*Finding the start*](docs/Finding-the-start.pdf): one search, written every way Delf allows, and what delfc writes.
 - [*The big ideas*](docs/Delf-big-ideas.pdf): the present as a proof of concept, then the future.
+- [*A natural sort, idiomatically*](docs/Natural-sort-idiomatically.pdf): Windows' file order as Delf code: nine versions timed, what decided the speed, and the model that states the rule.
 
 ## More
 
