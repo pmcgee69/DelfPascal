@@ -66,7 +66,8 @@ delfc, atm a proof of concept in Python on a tree-sitter grammar, translates:
 
 - **Stage 1's syntax:** 
   `λ` lambdas, 
-  function types `(A -> B)`, 
+  function types `(A -> B)`, with parameter modes `(var Integer -> ())`,
+  partial application `Add(5, _)` and sections `_ > 0`,
   free generic functions with type inference from arguments and from the expected type (`_` for a slot left to infer),
   tuples and destructuring, 
   record literals, 
@@ -75,12 +76,22 @@ delfc, atm a proof of concept in Python on a tree-sitter grammar, translates:
   `const X := …`, and its short form `X ← …`,
   `for const`, 
   `for var (i, X) in Xs.Enumerate`, 
-  `[0..10_000]`
+  `for const (X, Y) in Zip(Xs, Ys)`,
+  `[0..10_000]`,
+  a probe `a.b._.c`, dropped from the output, whose hover gives the type at that point
 - **A library** delfc adds as needed, in plain Delphi units: `Filter`, `Map`, `Join`, `Count`,
-  `Max`, `Find`, `Take`, `ZipWith`, `Iota`, `CallN` and more on arrays, and `Optional`'s own.
-- **Errors where they belong:** a name declared nowhere is an error where it's used, not
+  `Max`, `Find`, `Take`, `ZipWith`, `Zip`, `Iota`, `CallN`, `Rotate` (a view), `Pairwise` and more on arrays,
+  lazy `Seq<T>` pipelines, `Timed`, `ReadLines`, and `Optional`'s own.
+  A routine passed by name becomes a reference once;
+  an overloaded one passed as a value is picked by its parameters' types.
+- **Errors where they belong:** a name or a type declared nowhere is an error where it's used, not
   a confusing one later; so is a value given to a `const` binding, or a reserved word used as
-  a name. delfc says what to write, where it can.
+  a name; a `const` passed to a `var` or `out` parameter, or an element written through a `const` array
+  (a hint in plain Delphi); a string left open, said as such rather than as a broken file.
+  A record starts as `Default(T)` unless it's set first.
+  Shapes newcomers reach for are named as what they are: a heading written with an arrow,
+  a missing `uses` with the unit wanted, a console program without `{$APPTYPE CONSOLE}`.
+  delfc says what to write, where it can.
 - **Sum types and `match`**
   exhaustive, 
   with nested patterns, 
@@ -93,13 +104,16 @@ delfc, atm a proof of concept in Python on a tree-sitter grammar, translates:
   and constant arrays' lengths counted against their entries in every configuration.
 - **Real projects:** 
   the units a file uses are read, for their types, routines and helpers, with names resolved as dcc32 resolves them;
-  a project's `.delf` files built by dcc64 or dcc32, its messages mapped back to the Delf lines.
+  a project's `.delf` files built by dcc64 or dcc32, its messages mapped back to the Delf lines;
+  `{ delf: debuglines }` writes `{$LINE}`, so dcc's messages, `Assert` and the debugger name the `.delf` line;
+  include files that hold code; DPM's packages.
 - **The editor:** a [Zed](https://zed.dev) extension and a language server, not yet published
   (the [video](https://www.youtube.com/watch?v=JXxUftwcHmQ) shows them). Highlighting, with
   functions and methods told apart by what a call really calls; delfc's errors as you type,
   dcc64's once typing pauses; inferred types as ghost text; hover on any name, a generic
-  call's inferred type arguments included; go to definition, into used units and the RTL;
-  find references; completion of members and unit names; build tasks.
+  call's inferred type arguments included, and on a chain's dot, a lambda, and a loop's pair of names;
+  go to definition, into used units and the RTL; find references; completion of members and of
+  unit names in a `uses` clause; the units delfc adds shown as ghost text; build tasks.
 
 Plain Delphi passes through delfc byte-identical; it gets only checks. Every test's output
 compiles on dcc32 and dcc64 as predicted. On the large corpus, a Delphi file renamed to
